@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Glacier Crawler</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        body { margin: 0; overflow: hidden; background: #020205; font-family: 'Montserrat', sans-serif; user-select: none; }
+        
+        #game-container { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; }
+
+        /* OVERLAYS */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(2, 2, 5, 0.95);
+            z-index: 10; color: white; transition: opacity 0.2s; backdrop-filter: blur(5px);
+        }
+        .hidden { display: none !important; }
+
+        h1 { font-size: 70px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 5px; color: #fff; text-shadow: 0 0 20px #00f2fe, 0 0 40px #00f2fe; }
+        h2 { color: #00f2fe; margin-bottom: 50px; font-weight: 900; text-shadow: 0 0 10px #00f2fe; }
+
+        .menu-btn {
+            background: rgba(0,0,0,0.8); color: #fff;
+            font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 700;
+            padding: 15px 40px; margin: 10px; /* Even Spacing */
+            border: 2px solid #fff; cursor: pointer; width: 320px;
+            text-align: center; transition: 0.1s; box-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+        .menu-btn:hover { background: #fff; color: #000; border-color: #00f2fe; transform: scale(1.02); box-shadow: 0 0 20px #00f2fe; }
+
+        /* HUD */
+        #hud { position: absolute; top: 20px; left: 20px; color: white; pointer-events: none; z-index: 5; }
+        .bar-wrap { width: 350px; height: 16px; background: #0a0a0a; margin-bottom: 10px; border: 2px solid #444; box-shadow: 0 0 10px #000; }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.1s linear; }
+        #hp-fill { background: #ff2a6d; box-shadow: 0 0 10px #ff2a6d; }
+        #xp-fill { background: #00f2fe; width: 0%; box-shadow: 0 0 10px #00f2fe; }
+
+        .depth-info { font-size: 24px; color: #00ffaa; letter-spacing: 2px; margin-bottom: 5px; font-weight: 900; text-shadow: 0 0 10px #00ffaa; }
+        .wave-info { font-size: 18px; color: #ff9900; font-weight: 700; margin-top:5px; }
+
+        #fps-counter { position: absolute; top: 20px; right: 20px; color: #00ffaa; font-weight: bold; font-family: monospace; z-index: 5; display: none; }
+
+        /* SKILLS */
+        #skills-row { display: flex; gap: 15px; margin-top: 20px; pointer-events: auto; }
+        .skill-box {
+            width: 60px; height: 60px; background: #0a0a0f; border: 2px solid #333;
+            position: relative; display: none; justify-content: center; align-items: center;
+            transition: all 0.2s;
+        }
+        .skill-box.ready { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.4); transform: scale(1.05); }
+        .skill-key { position: absolute; top: -10px; left: -5px; background: #000; border: 1px solid #666; font-size: 10px; padding: 2px 5px; color: #fff; font-weight: bold; z-index: 4; }
+        .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.85); z-index: 3; transition: height 0.1s linear; }
+        
+        .ico-shock { width: 24px; height: 24px; border-radius: 50%; border: 3px solid #00f2fe; box-shadow: 0 0 10px #00f2fe; }
+        .ico-mag { width: 22px; height: 16px; border-bottom: 4px solid #fff; border-left: 4px solid #fff; border-right: 4px solid #fff; border-top: 0; border-radius: 0 0 50% 50%; box-shadow: 0 0 10px #fff; margin-top: -6px; }
+        .ico-shield { width: 22px; height: 22px; border: 4px solid #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa; background: rgba(0, 255, 170, 0.2); }
+        .ico-multi { width: 6px; height: 18px; background: #ff9900; box-shadow: 10px 0 0 #ff9900, -10px 0 0 #ff9900, 0 0 10px #ff9900; }
+
+        /* MODALS */
+        .modal-content { background: #050508; border: 2px solid #00f2fe; padding: 40px; text-align: center; max-width: 900px; width: 90%; box-shadow: 0 0 50px rgba(0, 242, 254, 0.2); }
+        .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .upgrade-btn { border: 1px solid #555; padding: 25px; background: #111; cursor: pointer; text-align: left; position: relative; transition: 0.2s; }
+        .upgrade-btn:hover { border-color: #00f2fe; background: #1a1a20; transform: translateY(-5px); box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); }
+        .u-title { color: #ffd700; font-size: 24px; margin-bottom: 8px; font-weight: 900; }
+        .u-desc { color: #aaa; font-size: 15px; line-height: 1.4; }
+        .u-tag { position: absolute; top: 10px; right: 10px; font-size: 10px; background: #333; padding: 3px 8px; border-radius: 4px; color: #fff; }
+        .unlock-btn { border-color: #ff00de; } .unlock-btn .u-title { color: #ff00de; }
+
+        /* TRIVIA */
+        #trivia-overlay { background: rgba(0,0,0,0.95); }
+        .trivia-box { width: 700px; background: #0a0a0f; border: 2px solid #fff; padding: 30px; text-align: center; box-shadow: 0 0 30px rgba(255,255,255,0.1); }
+        .t-ques { font-size: 24px; margin-bottom: 30px; color: #fff; font-weight: 700; line-height: 1.4; }
+        .t-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .t-btn { background: #111; border: 1px solid #555; color: #fff; padding: 20px; font-size: 16px; cursor: pointer; font-weight: bold; transition:0.2s;}
+        .t-btn:hover { background: #fff; color: #000; border-color: #fff; }
+        .t-status { font-size: 16px; color: #ff2a6d; margin-bottom: 15px; height: 20px; letter-spacing: 2px; font-weight: 900; }
+
+        /* PAUSE & SETTINGS */
+        #pause-content, #settings-content {
+            background: #0a0a0f; border: 1px solid #444; padding: 40px; width: 600px;
+            display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px;
+            align-items: center; /* Centered buttons */
+        }
+        #pause-content { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 16px; color: #ccc; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .stat-val { font-weight: bold; color: #fff; }
+        
+        /* LEARN CARDS */
+        .fact-card { 
+            background: rgba(20,20,30, 0.9); border: 1px solid #444; padding: 30px; 
+            cursor: pointer; transition: all 0.2s; position: relative; min-height: 120px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .fact-card:hover { border-color: #00f2fe; background: rgba(30,30,40,1); }
+        .fact-card.revealed { border-color: #00f2fe; background: #051a24; }
+        .fact-a-wrap { margin-top: 15px; border-top: 1px solid #333; padding-top: 15px; display: none; }
+        .revealed .fact-a-wrap { display: block; }
+
+        /* TRANSITION SCREEN */
+        #depth-screen {
+            background: #000;
+        }
+
+        /* --- DEV CONSOLE STYLES --- */
+        #dev-console {
+            position: absolute; top: 10px; right: 10px; width: 300px;
+            background: rgba(0, 0, 0, 0.9); border: 1px solid #00f2fe;
+            color: #00f2fe; font-family: monospace; z-index: 1000;
+            padding: 15px; display: none; box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+        }
+        #dev-console h3 { margin: 0 0 10px 0; color: #fff; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .dev-row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+        .dev-input { width: 60px; background: #111; border: 1px solid #555; color: #fff; padding: 2px; }
+        .dev-btn { width: 100%; background: #222; border: 1px solid #00f2fe; color: #fff; padding: 5px; cursor: pointer; margin-top: 5px; font-family: monospace; }
+        .dev-btn:hover { background: #00f2fe; color: #000; }
+        .dev-chk { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="fps-counter">FPS: 60</div>
+
+    <div id="dev-console">
+        <h3>DEV CONSOLE (Toggle: ~)</h3>
+        
+        <div class="dev-row">
+            <span>GOD MODE (No CD/Dmg)</span>
+            <input type="checkbox" id="dev-god" class="dev-chk">
+        </div>
+        <div class="dev-row">
+            <span>DISABLE TRIVIA</span>
+            <input type="checkbox" id="dev-trivia" class="dev-chk">
+        </div>
+        
+        <div style="margin-top:10px; color:#aaa; font-size:12px;">PLAYER STATS</div>
+        <div class="dev-row">
+            <span>Damage</span>
+            <input type="number" id="dev-dmg" class="dev-input" onchange="updatePlayerStat('dmg', this.value)">
+        </div>
+        <div class="dev-row">
+            <span>Fire Rate (frames)</span>
+            <input type="number" id="dev-fr" class="dev-input" onchange="updatePlayerStat('fr', this.value)">
+        </div>
+        <div class="dev-row">
+            <span>Speed</span>
+            <input type="number" id="dev-spd" class="dev-input" onchange="updatePlayerStat('spd', this.value)">
+        </div>
+        <div class="dev-row">
+            <span>Bullet Speed</span>
+            <input type="number" id="dev-bspd" class="dev-input" onchange="updatePlayerStat('bulletSpd', this.value)">
+        </div>
+
+        <div style="margin-top:10px; color:#aaa; font-size:12px;">NAVIGATION</div>
+        <button class="dev-btn" onclick="devInstantLevel()">INSTANT LEVEL UP</button>
+        <button class="dev-btn" onclick="devSkipWave()">SKIP WAVE (KILL ALL)</button>
+        <button class="dev-btn" onclick="devNextZone()">NEXT ZONE (TELEPORT)</button>
+        <button class="dev-btn" onclick="devUnlockAll()">UNLOCK ALL MODULES</button>
+    </div>
+
+    <div id="start-screen" class="overlay">
+        <h1>GLACIER CRAWLER</h1>
+        <h2 style="font-size: 24px; letter-spacing: 2px;">DEEP DIVE PROTOCOL</h2>
+        <button class="menu-btn" onclick="startGame()">INITIATE</button>
+        <button class="menu-btn" onclick="openSettings('MENU')">SETTINGS</button>
+        <button class="menu-btn" onclick="showLearn()">ARCHIVE</button>
+    </div>
+
+    <div id="settings-screen" class="overlay hidden">
+        <h1>SETTINGS</h1>
+        <div id="settings-content">
+            <button class="menu-btn" id="btn-bloom" onclick="toggleBloom()" style="margin:0; width:100%">GRAPHICS: HIGH</button>
+            <button class="menu-btn" id="btn-fps" onclick="toggleFps()" style="margin:0; width:100%">FPS: OFF</button>
+        </div>
+        <button class="menu-btn" onclick="closeSettings()">BACK</button>
+    </div>
+
+    <div id="win-screen" class="overlay hidden">
+        <h1 style="color: #00ffaa; font-size: 80px; text-shadow: 0 0 30px #00ffaa;">MISSION COMPLETE</h1>
+        <h2 style="color: #fff;">GLACIER CONQUERED</h2>
+        <div style="color: #ccc; margin-bottom: 30px; font-size: 18px;">ALL SAMPLES COLLECTED</div>
+        <button class="menu-btn" onclick="startGame()">RESTART</button>
+        <button class="menu-btn" onclick="goHome()">MAIN MENU</button>
+    </div>
+
+    <div id="depth-screen" class="overlay hidden">
+        <h1 id="depth-title" style="font-size:60px;">ZONE 1</h1>
+        <h2 id="depth-sub" style="color:#aaa;">ENTERING...</h2>
+    </div>
+
+    <div id="pause-screen" class="overlay hidden">
+        <h1>SYSTEM PAUSED</h1>
+        <div id="pause-content">
+            <div>
+                <h3 style="color:#00f2fe; border-bottom:2px solid #00f2fe; padding-bottom:10px;">STATS</h3>
+                <div class="stat-row"><span>Damage</span><span class="stat-val" id="st-dmg">0</span></div>
+                <div class="stat-row"><span>Fire Rate</span><span class="stat-val" id="st-fr">0</span></div>
+                <div class="stat-row"><span>Speed</span><span class="stat-val" id="st-spd">0</span></div>
+                <div class="stat-row"><span>Max HP</span><span class="stat-val" id="st-hp">0</span></div>
+            </div>
+            <div>
+                <h3 style="color:#ff00de; border-bottom:2px solid #ff00de; padding-bottom:10px;">MODULES</h3>
+                <div id="st-mods"></div>
+            </div>
+        </div>
+        <button class="menu-btn" onclick="togglePause()">RESUME</button>
+        <button class="menu-btn" onclick="openSettings('PAUSE')">SETTINGS</button>
+        <button class="menu-btn" style="width:200px; padding:15px; margin-top:0;" onclick="goHome()">QUIT</button>
+    </div>
+
+    <div id="learn-screen" class="overlay hidden">
+        <h1 style="font-size: 40px; margin-bottom: 20px;">GLACIER ARCHIVE</h1>
+        <div style="margin-bottom:10px; color:#aaa">CLICK CARDS TO REVEAL DATA</div>
+        <div id="fact-container" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; width:80%; overflow-y:auto; max-height:70vh; padding-bottom:50px;"></div>
+        <button class="menu-btn" onclick="goHome()">BACK</button>
+    </div>
+
+    <div id="death-screen" class="overlay hidden">
+        <h1 style="color: #ff2a6d;">HULL CRITICAL</h1>
+        <h2 id="final-score"></h2>
+        <button class="menu-btn" onclick="startGame()">REBOOT</button>
+        <button class="menu-btn" onclick="goHome()">MAIN MENU</button>
+    </div>
+
+    <div id="hud" class="hidden">
+        <div class="depth-info" id="level-tag">ZONE OF ACCUMULATION</div>
+        <div class="wave-info" id="wave-tag">WAVE 1/10</div>
+        
+        <div class="bar-wrap" style="margin-top:15px;"><div id="hp-fill" class="bar-fill"></div></div>
+        <div class="bar-wrap" style="border-color:#005566; height:10px;"><div id="xp-fill" class="bar-fill"></div></div>
+        <div style="font-size:14px; color:#888; font-weight: bold; margin-top:5px;">LVL <span id="lvl-txt" style="color:#fff; font-size:18px;">1</span></div>
+
+        <div id="skills-row">
+            <div id="skill-shock" class="skill-box"><div class="skill-key">SPC</div><div class="ico-shock"></div><div id="cd-shock" class="cooldown-overlay" style="height:100%"></div></div>
+            <div id="skill-mag" class="skill-box"><div class="skill-key">Q</div><div class="ico-mag"></div><div id="cd-mag" class="cooldown-overlay" style="height:100%"></div></div>
+            <div id="skill-multi" class="skill-box"><div class="skill-key">E</div><div class="ico-multi"></div><div id="cd-multi" class="cooldown-overlay" style="height:100%"></div></div>
+            <div id="skill-shield" class="skill-box"><div class="ico-shield"></div><div id="cd-shield" class="cooldown-overlay" style="height:100%"></div></div>
+        </div>
+    </div>
+
+    <div id="trivia-overlay" class="overlay hidden">
+        <div class="trivia-box">
+            <div style="color:#00f2fe; margin-bottom:10px; font-weight:900; letter-spacing:2px">LEVEL UP PROTOCOL</div>
+            <div class="t-status" id="t-status"></div>
+            <div class="t-ques" id="t-ques">?</div>
+            <div class="t-opts" id="t-opts"></div>
+            <div style="margin-top:20px; font-size:12px; color:#666;">CORRECT: UPGRADE<br>WRONG: TRY AGAIN NEXT LEVEL</div>
+        </div>
+    </div>
+
+    <div id="upgrade-overlay" class="overlay hidden">
+        <div class="modal-content">
+            <h2 id="up-header" style="color:#fff; font-size:50px; margin-bottom: 10px;">SYSTEM UPGRADE</h2>
+            <div class="ans-grid" id="up-container"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const screens = {
+    start: document.getElementById('start-screen'),
+    death: document.getElementById('death-screen'),
+    win: document.getElementById('win-screen'),
+    settings: document.getElementById('settings-screen'),
+    hud: document.getElementById('hud'),
+    upgrade: document.getElementById('upgrade-overlay'),
+    trivia: document.getElementById('trivia-overlay'),
+    pause: document.getElementById('pause-screen'),
+    learn: document.getElementById('learn-screen'),
+    depth: document.getElementById('depth-screen')
+};
+
+// CONSTANTS
+const ROOM_WIDTH = 2400; // Large Arena
+const ROOM_HEIGHT = 1800;
+const WAVES_PER_DEPTH = 10;
+const MAX_PARTICLES = 100; // Performance Cap
+const MAX_XP = 300; // Performance Cap
+
+const DEPTH_NAMES = [
+    "ZONE OF ACCUMULATION",
+    "EQUILIBRIUM LINE",
+    "CREVASSES",
+    "CIRQUE",
+    "ZONE OF ABLATION",
+    "MORAINE"
+];
+
+// STATE
+let gameState="MENU", previousState="MENU"; 
+let gameSettings = { bloom: true, fps: false };
+let animationFrameId, transitionTimer;
+let keys = { w:false, a:false, s:false, d:false, space:false, q:false, e:false };
+let mouse = { x: 0, y: 0, wx: 0, wy: 0 };
+let camera = { x: 0, y: 0 };
+let screenShake = 0;
+
+// GAME VARIABLES
+let depthIndex = 0; 
+let wave = 0; 
+let player = {};
+let bullets=[], enemies=[], particles=[], xpOrbs=[], floatTexts=[], visuals=[];
+let portal = { active: false, x: 0, y: 0, r: 80, angle: 0 };
+let spawnTimer = 0;
+let askedQuestions = []; 
+
+// TIME & FPS
+let lastTime = 0;
+let fpsTimer = 0;
+let frames = 0;
+
+/* --- DATA --- */
+const abilitiesDB = [
+    { id: 'shock', name: 'SHOCKWAVE', desc: 'Press [SPACE] to blast enemies.', color: '#00f2fe' },
+    { id: 'mag', name: 'GRAVITY WELL', desc: 'Press [Q] to pull XP.', color: '#fff' },
+    { id: 'multi', name: 'MULTI-SHOT', desc: 'Press [E] for 3x shots (2s).', color: '#ff9900' },
+    { id: 'shield', name: 'ION SHIELD', desc: 'Passively blocks damage.', color: '#00ffaa' }
+];
+
+const upgradesDB = [
+    { n: "Overclock", d: "Fire Rate +15%", apply: p=>{ p.fr=Math.max(3, p.fr*0.85); }, undo: p=>{ p.fr/=0.85; } },
+    { n: "High Voltage", d: "Damage +25%", apply: p=>{ p.dmg*=1.25; }, undo: p=>{ p.dmg/=1.25; } },
+    { n: "Nanobots", d: "MaxHP +30 & Heal", apply: p=>{ p.maxHp+=30; p.hp=p.maxHp; }, undo: p=>{ p.maxHp-=30; if(p.hp>p.maxHp)p.hp=p.maxHp; } },
+    { n: "Thrusters", d: "Speed +10%", apply: p=>{ p.spd*=1.1; }, undo: p=>{ p.spd/=1.1; } },
+    { n: "Accelerator", d: "Bullet Speed +20%", apply: p=>{ p.bulletSpd*=1.2; }, undo: p=>{ p.bulletSpd/=1.2; } },
+    // Conditional
+    { req: 'shock', n: "Core Reactor", d: "Blast Dmg +50", apply: p=>{ p.blastDmg+=50; }, undo: p=>{ p.blastDmg-=50; } },
+    { req: 'shock', n: "Amp Coil", d: "Shock Cooldown -20%", apply: p=>p.shockMax*=0.8, undo: p=>p.shockMax/=0.8 },
+    { req: 'shock', n: "Gigawave", d: "Shock Radius +25%", apply: p=>p.shockRad*=1.25, undo: p=>p.shockRad/=1.25 },
+    { req: 'mag', n: "Superconductor", d: "Magnet Cooldown -20%", apply: p=>p.magMax*=0.8, undo: p=>p.magMax/=0.8 },
+    { req: 'shield', n: "Rapid Charge", d: "Shield Recharge -20%", apply: p=>p.shieldMax*=0.8, undo: p=>p.shieldMax/=0.8 },
+    { req: 'multi', n: "Extended Mag", d: "Multi-Shot Duration +1s", apply: p=>p.multiDur+=60, undo: p=>p.multiDur-=60 },
+    { req: 'multi', n: "Rapid Reload", d: "Multi-Shot Cooldown -20%", apply: p=>p.multiMax*=0.8, undo: p=>p.multiMax/=0.8 }
+];
+
+const triviaQuestions = [
+    // General
+    { id: 1, q: "What percentage of Earth's freshwater is in glaciers?", a: ["69%"], tags: ["general"] },
+    { id: 2, q: "What causes glaciers to move downhill?", a: ["Gravity"], tags: ["general"] },
+    { id: 3, q: "What gas in ice cores reveals past climates?", a: ["CO2"], tags: ["general"] },
+    { id: 4, q: "What is the study of glaciers called?", a: ["Glaciology"], tags: ["general"] },
+    { id: 5, q: "Which ice sheet holds the most freshwater?", a: ["Antarctic"], tags: ["general"] },
+    
+    // Accumulation
+    { id: 6, q: "Does snow build up or melt in the Zone of Accumulation?", a: ["Builds up"], tags: ["accum"] },
+    { id: 7, q: "What is snow that survived one summer called?", a: ["Firn"], tags: ["accum"] },
+    { id: 8, q: "What color is highly compressed glacial ice?", a: ["Blue"], tags: ["accum"] },
+    
+    // Equilibrium
+    { id: 9, q: "What line separates accumulation and ablation?", a: ["Equilibrium Line"], tags: ["eq"] },
+    { id: 10, q: "Is glacial mass balance zero at the Equilibrium Line?", a: ["Yes"], tags: ["eq"] },
+    
+    // Crevasses
+    { id: 11, q: "What are deep cracks in a glacier called?", a: ["Crevasses"], tags: ["crev"] },
+    { id: 12, q: "Do crevasses form in the brittle or plastic zone?", a: ["Brittle Top"], tags: ["crev"] },
+    { id: 13, q: "Can crevasses be hidden by snow bridges?", a: ["Yes"], tags: ["crev"] },
+    
+    // Cirque
+    { id: 14, q: "What is a bowl-shaped depression at a glacier head?", a: ["Cirque"], tags: ["cirque"] },
+    { id: 15, q: "Are Cirques formed by erosion?", a: ["Yes"], tags: ["cirque"] },
+    { id: 16, q: "What is a sharp ridge between two cirques?", a: ["Arete"], tags: ["cirque"] },
+    
+    // Ablation
+    { id: 17, q: "What happens in the Zone of Ablation?", a: ["Ice Loss"], tags: ["abl"] },
+    { id: 18, q: "Solid ice turning directly to gas is called?", a: ["Sublimation"], tags: ["abl"] },
+    { id: 19, q: "Ice chunks breaking into the ocean is called?", a: ["Calving"], tags: ["abl"] },
+    
+    // Moraine
+    { id: 20, q: "What is the rock debris carried by a glacier?", a: ["Moraine"], tags: ["mor"] },
+    { id: 21, q: "Debris at the end of a glacier is what Moraine?", a: ["Terminal"], tags: ["mor"] },
+    { id: 22, q: "Is Moraine sediment sorted by size?", a: ["No (Unsorted)"], tags: ["mor"] }
+];
+
+/* --- NAVIGATION --- */
+function hideAll() { Object.values(screens).forEach(s => s.classList.add('hidden')); }
+function goHome() { 
+    if(transitionTimer) clearTimeout(transitionTimer);
+    gameState="MENU"; hideAll(); screens.start.classList.remove('hidden'); 
+    canvas.style.cursor = "default";
+    renderBackground(); 
+}
+
+function showLearn() {
+    hideAll(); screens.learn.classList.remove('hidden');
+    const c = document.getElementById('fact-container'); c.innerHTML="";
+    triviaQuestions.forEach(t => {
+        const d = document.createElement('div'); 
+        d.className = 'fact-card';
+        d.onclick = function() { this.classList.toggle('revealed'); };
+        d.innerHTML = `
+            <div class="q-label">ARCHIVE NODE ${t.id}</div>
+            <div class="fact-q">${t.q}</div>
+            <div class="fact-a-wrap"><div class="fact-a">${t.a[0]}</div></div>
+        `;
+        c.appendChild(d);
+    });
+}
+
+function openSettings(fromState) {
+    previousState = fromState === 'MENU' ? 'MENU' : gameState;
+    if(gameState === 'PLAY') gameState = 'PAUSE'; 
+    hideAll();
+    screens.settings.classList.remove('hidden');
+}
+
+function closeSettings() {
+    hideAll();
+    if(previousState === 'MENU') {
+        screens.start.classList.remove('hidden');
+        gameState = "MENU";
+    } else {
+        screens.pause.classList.remove('hidden');
+        screens.hud.classList.remove('hidden');
+        gameState = "PAUSE";
+    }
+}
+
+function toggleBloom() {
+    gameSettings.bloom = !gameSettings.bloom;
+    document.getElementById('btn-bloom').innerText = gameSettings.bloom ? "GRAPHICS: HIGH" : "GRAPHICS: LOW";
+}
+
+function toggleFps() {
+    gameSettings.fps = !gameSettings.fps;
+    document.getElementById('btn-fps').innerText = gameSettings.fps ? "FPS: ON" : "FPS: OFF";
+    document.getElementById('fps-counter').style.display = gameSettings.fps ? 'block' : 'none';
+}
+
+function startGame() { 
+    if(animationFrameId) cancelAnimationFrame(animationFrameId);
+    if(transitionTimer) clearTimeout(transitionTimer);
+    hideAll(); screens.hud.classList.remove('hidden'); 
+    canvas.style.cursor = "crosshair";
+    
+    depthIndex = 0;
+    resetPlayer();
+    startDepth();
+    
+    gameState="PLAY"; 
+    lastTime = performance.now();
+    loop(lastTime); 
+}
+
+function resetPlayer() {
+    player = {
+        x: ROOM_WIDTH/2, y: ROOM_HEIGHT/2,
+        hp: 100, maxHp: 100, xp: 0, req: 50, lvl: 1,
+        spd: 7, dmg: 30, fr: 18, cd: 0, bulletSpd: 16,
+        shotCount: 0, blastDmg: 200, 
+        upgradeHistory: [],
+        hasShock: false, shockMax: 600, shockTimer: 600, shockRad: 450, 
+        hasMag: false, magMax: 1000, magTimer: 1000, magDur: 150, magActive: 0,
+        hasMulti: false, multiMax: 900, multiTimer: 900, multiDur: 120, multiActive: 0,
+        hasShield: false, shieldMax: 800, shieldTimer: 800, shieldUp: false
+    };
+    askedQuestions = [];
+    updateHUD(); updateSkillUI();
+    // Update Dev Console Values
+    document.getElementById('dev-dmg').value = player.dmg;
+    document.getElementById('dev-fr').value = player.fr;
+    document.getElementById('dev-spd').value = player.spd;
+    document.getElementById('dev-bspd').value = player.bulletSpd;
+}
+
+function togglePause() {
+    if(gameState === "PLAY") {
+        gameState = "PAUSE";
+        screens.pause.classList.remove('hidden');
+        updatePauseStats();
+    } else if(gameState === "PAUSE") {
+        gameState = "PLAY";
+        screens.pause.classList.add('hidden');
+        lastTime = performance.now(); // Reset time to avoid jump
+    }
+}
+
+function updatePauseStats() {
+    document.getElementById('st-dmg').innerText = Math.floor(player.dmg);
+    document.getElementById('st-fr').innerText = (60/player.fr).toFixed(1) + "/s";
+    document.getElementById('st-spd').innerText = player.spd.toFixed(1);
+    document.getElementById('st-hp').innerText = Math.floor(player.maxHp);
+    
+    let m = document.getElementById('st-mods');
+    m.innerHTML = "";
+    if(!player.hasShock && !player.hasMag && !player.hasShield && !player.hasMulti) m.innerHTML = "<span style='color:#666'>No Modules Installed</span>";
+    if(player.hasShock) m.innerHTML += "<div class='stat-row' style='color:#00f2fe'>SHOCKWAVE</div>";
+    if(player.hasMag) m.innerHTML += "<div class='stat-row' style='color:#fff'>GRAVITY WELL</div>";
+    if(player.hasMulti) m.innerHTML += "<div class='stat-row' style='color:#ff9900'>MULTI-SHOT</div>";
+    if(player.hasShield) m.innerHTML += "<div class='stat-row' style='color:#00ffaa'>ION SHIELD</div>";
+}
+
+/* --- GAME LOGIC --- */
+function startDepth() {
+    // Show Transition
+    gameState = "TRANSITION";
+    portal.active = false; // Reset portal
+    screens.depth.classList.remove('hidden');
+    document.getElementById('depth-title').innerText = DEPTH_NAMES[depthIndex];
+    document.getElementById('depth-sub').innerText = `DEPTH ${depthIndex + 1}`;
+    
+    transitionTimer = setTimeout(() => {
+        screens.depth.classList.add('hidden');
+        gameState = "PLAY";
+        lastTime = performance.now(); // Reset Delta
+        wave = 0;
+        bullets = []; enemies = []; particles = []; visuals = []; xpOrbs = [];
+        player.x = ROOM_WIDTH/2; player.y = ROOM_HEIGHT/2;
+        document.getElementById('level-tag').innerText = DEPTH_NAMES[depthIndex];
+        spawnNextWave();
+    }, 2000);
+}
+
+function spawnNextWave() {
+    // GUARD CLAUSE: Don't spawn if portal is active (prevents wave > 10)
+    if(portal.active) return;
+    
+    wave++;
+    document.getElementById('wave-tag').innerText = `WAVE ${wave}/${WAVES_PER_DEPTH}`;
+    addFloat(`WAVE ${wave}`, player.x, player.y - 150, "#ff9900");
+
+    // MODERATE SPAM LOGIC: Original formula * 1.5 (50% Increase)
+    let rawCount = 3 + (depthIndex * 1.8) + Math.floor(wave * 0.6);
+    const count = Math.floor(rawCount * 1.5);
+    
+    for(let i=0; i<count; i++) {
+        // STRICTER SHAPE LOGIC:
+        let maxSides = 4 + depthIndex; 
+        let minSides = 3;
+        let sides = minSides + Math.floor(Math.random() * (maxSides - minSides + 1));
+
+        // HP and Speed Tweaks
+        let hp = (35 + (depthIndex*10) + (wave*4)) * (1+(sides-3)*0.4);
+        let spd = Math.max(1.5, 5 - (sides*0.5) + (depthIndex*0.1)); 
+        
+        let ex, ey, dist;
+        do {
+            ex = Math.random()*ROOM_WIDTH;
+            ey = Math.random()*ROOM_HEIGHT;
+            dist = Math.sqrt((ex-player.x)**2 + (ey-player.y)**2);
+        } while(dist < 700); 
+
+        const colors = ['#ff0055','#ff9900','#ffe600','#33ff00','#00ffff','#0066ff','#9900ff'];
+        enemies.push({ 
+            id: Math.random(),
+            x:ex, y:ey, hp:hp, maxHp:hp, sides:sides, size:20+(sides*4), spd:spd, 
+            color:colors[(sides-3)%7], angle:0, spin:(Math.random()-0.5)*0.15,
+            type: 'normal'
+        });
+        visuals.push({type:'spawn', x:ex, y:ey, r:60, op:1});
+    }
+
+    // SPAWN KAMIKAZES (Starting from Depth 2 or late waves of Depth 1)
+    if(depthIndex >= 1) {
+        let kamiCount = Math.floor(wave / 3) + (depthIndex - 1);
+        if(kamiCount > 0) {
+            for(let k=0; k<kamiCount; k++) {
+                let ex, ey, dist;
+                do {
+                    ex = Math.random()*ROOM_WIDTH;
+                    ey = Math.random()*ROOM_HEIGHT;
+                    dist = Math.sqrt((ex-player.x)**2 + (ey-player.y)**2);
+                } while(dist < 900); 
+
+                enemies.push({ 
+                    id: Math.random(),
+                    x:ex, y:ey, hp: 1, maxHp:1, sides:3, size:25, spd:9, // Fast
+                    color: '#ff0000', angle:0, spin:0.3,
+                    type: 'kamikaze'
+                });
+                visuals.push({type:'spawn', x:ex, y:ey, r:60, op:1});
+                addFloat("WARNING", ex, ey, "#ff0000");
+            }
+        }
+    }
+}
+
+function checkWaveClear() {
+    if(enemies.length === 0 && gameState === "PLAY") {
+        if(wave >= WAVES_PER_DEPTH) {
+            // PORTAL SPAWNS CENTER
+            if(!portal.active) {
+                portal.active = true;
+                portal.x = ROOM_WIDTH / 2;
+                portal.y = ROOM_HEIGHT / 2;
+                addFloat("PORTAL OPEN", portal.x, portal.y - 120, "#00ffaa");
+            }
+        } else {
+            setTimeout(spawnNextWave, 1000); 
+        }
+    }
+}
+
+/* --- TRIVIA & LEVEL UP --- */
+function checkLevelUp() {
+    if(player.xp >= player.req) {
+        player.xp = 0; player.req = Math.floor(player.req * 1.35);
+        player.lvl++;
+        updateHUD();
+        startTrivia();
+    }
+}
+
+function startTrivia() {
+    gameState = "TRIVIA";
+    screens.trivia.classList.remove('hidden');
+    document.getElementById('t-status').innerText = "";
+    
+    // Pick Question logic
+    let tag = "";
+    if(depthIndex===0) tag="accum"; else if(depthIndex===1) tag="eq"; else if(depthIndex===2) tag="crev";
+    else if(depthIndex===3) tag="cirque"; else if(depthIndex===4) tag="abl"; else if(depthIndex===5) tag="mor";
+    
+    // Filter available questions not asked yet
+    let pool = triviaQuestions.filter(q => !askedQuestions.includes(q.id) && (q.tags.includes("general") || q.tags.includes(tag)));
+    // If ran out, reset pool for this tag
+    if(pool.length === 0) {
+        pool = triviaQuestions.filter(q => q.tags.includes("general") || q.tags.includes(tag));
+    }
+    
+    let q = pool[Math.floor(Math.random()*pool.length)];
+    askedQuestions.push(q.id);
+
+    document.getElementById('t-ques').innerText = q.q;
+
+    // Answers
+    let correct = q.a[0];
+    let dummies = ["Ice Shelf", "Sublimation", "Crevasse", "Moraine", "Gravity", "Firn", "10%", "90%", "Horn", "Erosion", "Deposition"];
+    let opts = [correct];
+    while(opts.length < 4) {
+        let d = dummies[Math.floor(Math.random()*dummies.length)];
+        if(!opts.includes(d) && d !== correct) opts.push(d);
+    }
+    opts.sort(()=>Math.random()-0.5);
+
+    const box = document.getElementById('t-opts'); box.innerHTML = "";
+    opts.forEach(o => {
+        let btn = document.createElement('button');
+        btn.className = "t-btn";
+        btn.innerText = o;
+        btn.onclick = () => checkAnswer(o === correct);
+        box.appendChild(btn);
+    });
+}
+
+function checkAnswer(isCorrect) {
+    if(isCorrect) {
+        document.getElementById('t-status').innerText = "CORRECT";
+        document.getElementById('t-status').style.color = "#00ffaa";
+        setTimeout(() => {
+            screens.trivia.classList.add('hidden');
+            
+            // Check for Module Unlock every 4 levels
+            const unacquired = abilitiesDB.filter(a => {
+                if(a.id==='shock' && player.hasShock) return false;
+                if(a.id==='mag' && player.hasMag) return false;
+                if(a.id==='multi' && player.hasMulti) return false;
+                if(a.id==='shield' && player.hasShield) return false;
+                return true;
+            });
+
+            if(player.lvl % 4 === 0 && unacquired.length > 0) triggerUnlock(unacquired);
+            else triggerUpgrade();
+            
+        }, 500);
+    } else {
+        document.getElementById('t-status').innerText = "INCORRECT";
+        document.getElementById('t-status').style.color = "#ff2a6d";
+        shake(10);
+        setTimeout(() => {
+            screens.trivia.classList.add('hidden');
+            gameState = "PLAY";
+            lastTime = performance.now(); // Reset time to avoid physics jump
+        }, 1500);
+    }
+}
+
+function triggerUnlock(availableAbs) {
+    gameState="UPGRADE"; screens.upgrade.classList.remove('hidden');
+    document.getElementById('up-header').innerText = "NEW MODULE";
+    document.getElementById('up-header').style.color = "#ff00de";
+    const con = document.getElementById('up-container'); con.innerHTML="";
+    availableAbs.forEach(a => {
+        const div = document.createElement('div'); div.className='upgrade-btn unlock-btn';
+        div.innerHTML=`<div class="u-tag">ABILITY</div><div class="u-title">${a.name}</div><div class="u-desc">${a.desc}</div>`;
+        div.onclick = () => {
+            if(a.id==='shock') player.hasShock=true;
+            if(a.id==='mag') player.hasMag=true;
+            if(a.id==='multi') player.hasMulti=true;
+            if(a.id==='shield') { player.hasShield=true; player.shieldUp=true; }
+            finishLevelUp(null);
+        };
+        con.appendChild(div);
+    });
+}
+
+function triggerUpgrade() {
+    gameState="UPGRADE"; screens.upgrade.classList.remove('hidden');
+    document.getElementById('up-header').innerText = "LEVEL UP";
+    document.getElementById('up-header').style.color = "#fff";
+    const con = document.getElementById('up-container'); con.innerHTML="";
+    
+    // 1. Force Nanobots
+    const nanobots = upgradesDB.find(u => u.n === "Nanobots");
+
+    // 2. Get pool of others
+    let pool = upgradesDB.filter(u => {
+        if(u.n === "Nanobots") return false; 
+        if(u.req === 'shock' && !player.hasShock) return false;
+        if(u.req === 'mag' && !player.hasMag) return false;
+        if(u.req === 'multi' && !player.hasMulti) return false;
+        if(u.req === 'shield' && !player.hasShield) return false;
+        return true;
+    });
+
+    // 3. Select 3 randoms + Nanobots
+    let selected = pool.sort(()=>Math.random()-0.5).slice(0,3);
+    selected.push(nanobots);
+    
+    // 4. Shuffle again for display
+    selected.sort(()=>Math.random()-0.5);
+
+    selected.forEach(u => {
+        const div = document.createElement('div'); div.className='upgrade-btn';
+        div.innerHTML=`<div class="u-tag">PASSIVE</div><div class="u-title">${u.n}</div><div class="u-desc">${u.d}</div>`;
+        div.onclick = () => { u.apply(player); finishLevelUp(u); };
+        con.appendChild(div);
+    });
+}
+
+function finishLevelUp(upObj) { 
+    if(upObj) player.upgradeHistory.push(upObj); 
+    updateHUD(); updateSkillUI(); screens.upgrade.classList.add('hidden'); gameState="PLAY"; 
+    lastTime = performance.now(); // Reset time
+    // Sync Dev Console
+    document.getElementById('dev-dmg').value = player.dmg;
+    document.getElementById('dev-fr').value = player.fr;
+    document.getElementById('dev-spd').value = player.spd;
+}
+
+/* --- UPDATES --- */
+function updateHUD() {
+    document.getElementById('hp-fill').style.width = Math.max(0, (player.hp/player.maxHp*100)) + "%";
+    document.getElementById('xp-fill').style.width = (player.xp/player.req*100) + "%";
+    document.getElementById('lvl-txt').innerText = player.lvl;
+}
+
+function updateSkillUI() {
+    const u = (id, has, timer, max, active) => {
+        const box = document.getElementById('skill-'+id);
+        const cd = document.getElementById('cd-'+id);
+        if(has) {
+            box.style.display="flex";
+            let pct = 1 - (timer/max);
+            if(active > 0) pct = 0; 
+            cd.style.height = (pct*100)+"%";
+            if(timer >= max && active <= 0) box.classList.add('ready'); else box.classList.remove('ready');
+        } else box.style.display="none";
+    };
+    u('shock', player.hasShock, player.shockTimer, player.shockMax, 0);
+    u('mag', player.hasMag, player.magTimer, player.magMax, player.magActive);
+    u('multi', player.hasMulti, player.multiTimer, player.multiMax, player.multiActive);
+    
+    const shBox = document.getElementById('skill-shield');
+    if(player.hasShield) {
+        shBox.style.display="flex";
+        if(player.shieldUp) { shBox.classList.add('ready'); document.getElementById('cd-shield').style.height="0%"; }
+        else { shBox.classList.remove('ready'); document.getElementById('cd-shield').style.height=(player.shieldTimer/player.shieldMax*100)+"%"; }
+    } else shBox.style.display="none";
+}
+
+function shake(amt) { screenShake=amt; }
+function addFloat(t,x,y,c) { if(floatTexts.length>20)floatTexts.shift(); floatTexts.push({t,x,y,c,l:60}); }
+function getDistSq(x1, y1, x2, y2) { return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2); }
+
+function isOnScreen(obj) {
+    const buffer = 100;
+    return (obj.x > camera.x - buffer && 
+            obj.x < camera.x + canvas.width + buffer &&
+            obj.y > camera.y - buffer && 
+            obj.y < camera.y + canvas.height + buffer);
+}
+
+/* --- MAIN LOOP --- */
+function loop(timestamp) {
+    animationFrameId = requestAnimationFrame(loop);
+    
+    // FPS Calculation
+    if(!lastTime) lastTime = timestamp;
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+    
+    // Normalization: 1.0 at 60 FPS
+    let dt = Math.min(deltaTime / 16.666, 4); 
+
+    fpsTimer += deltaTime;
+    frames++;
+    if(fpsTimer >= 500) {
+        document.getElementById('fps-counter').innerText = "FPS: " + Math.round((frames * 1000) / fpsTimer);
+        frames = 0;
+        fpsTimer = 0;
+    }
+
+    // DEV TOOL HOOK: UPDATE LOOP
+    if(window.devUpdate) window.devUpdate();
+    
+    if(gameState === "MENU" || gameState === "WIN") { renderBackground(); return; }
+    if(gameState !== "PLAY") return; // PAUSE EVERYTHING ELSE
+    
+    update(dt);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.save(); applyCamera(); drawRoom(); ctx.restore();
+}
+
+function applyCamera() {
+    let targetX = player.x - canvas.width/2;
+    let targetY = player.y - canvas.height/2;
+    let sx=(Math.random()-0.5)*screenShake, sy=(Math.random()-0.5)*screenShake;
+    if(screenShake>0) screenShake*=0.9;
+    camera.x += (targetX - camera.x)*0.1;
+    camera.y += (targetY - camera.y)*0.1;
+    ctx.translate(-camera.x+sx, -camera.y+sy);
+}
+
+function update(dt) {
+    mouse.wx = mouse.x + camera.x; mouse.wy = mouse.y + camera.y;
+
+    // Movement (Scaled by DT)
+    if(keys.w) player.y-=player.spd * dt;
+    if(keys.s) player.y+=player.spd * dt;
+    if(keys.a) player.x-=player.spd * dt;
+    if(keys.d) player.x+=player.spd * dt;
+    if(player.x < 30) player.x = 30; if(player.x > ROOM_WIDTH-30) player.x = ROOM_WIDTH-30;
+    if(player.y < 30) player.y = 30; if(player.y > ROOM_HEIGHT-30) player.y = ROOM_HEIGHT-30;
+
+    // PORTAL INTERACTION
+    if(portal.active) {
+        portal.angle += 0.02 * dt;
+        if(getDistSq(player.x, player.y, portal.x, portal.y) < (portal.r/2 + 30)**2) {
+            // Enter portal
+            portal.active = false;
+            depthIndex++;
+            if(depthIndex >= DEPTH_NAMES.length) {
+                // WIN CONDITION
+                gameState = "WIN";
+                hideAll();
+                screens.win.classList.remove('hidden');
+            } else {
+                startDepth();
+            }
+            return;
+        }
+    }
+
+    // Skills
+    if(player.hasShock) {
+        if(player.shockTimer < player.shockMax) player.shockTimer += dt;
+        if(keys.space && player.shockTimer >= player.shockMax) {
+            player.shockTimer = 0; shake(30);
+            visuals.push({type:'shock', x:player.x, y:player.y, r:0, maxR:player.shockRad, op:1});
+            let rSq = player.shockRad * player.shockRad;
+            // Iterate backwards for safe removal
+            for(let i=enemies.length-1; i>=0; i--) {
+                let e = enemies[i];
+                if(getDistSq(e.x, e.y, player.x, player.y) < rSq) {
+                    e.hp -= player.blastDmg;
+                    addFloat(Math.floor(player.blastDmg), e.x, e.y, "#00f2fe"); 
+                    let a=Math.atan2(e.y-player.y, e.x-player.x);
+                    // Pushback scaled by DT isn't necessary for impulse, but consistent force
+                    e.x+=Math.cos(a)*350; e.y+=Math.sin(a)*350; 
+                    
+                    // Kill check immediately
+                    if(e.hp <= 0) {
+                        killEnemy(e, i); // XP Drop restored
+                        checkWaveClear();
+                    }
+                }
+            }
+        }
+    }
+    if(player.hasMag) {
+        if(player.magActive > 0) player.magActive -= dt;
+        else if(player.magTimer < player.magMax) player.magTimer += dt;
+        if(keys.q && player.magTimer >= player.magMax && player.magActive <= 0) {
+            player.magTimer = 0; player.magActive = player.magDur; 
+            addFloat("MAGNET", player.x, player.y-50, "#fff");
+        }
+    }
+    if(player.hasMulti) {
+        if(player.multiActive > 0) player.multiActive -= dt;
+        else if(player.multiTimer < player.multiMax) player.multiTimer += dt;
+        if(keys.e && player.multiTimer >= player.multiMax && player.multiActive <= 0) {
+            player.multiTimer = 0; player.multiActive = player.multiDur;
+            addFloat("MULTI-SHOT", player.x, player.y-50, "#ff9900");
+        }
+    }
+    if(player.hasShield && !player.shieldUp) {
+        player.shieldTimer -= dt;
+        if(player.shieldTimer<=0) { player.shieldUp=true; player.shieldTimer=player.shieldMax; addFloat("SHIELD RECHARGED", player.x, player.y-50, "#00ffaa"); }
+    }
+    updateSkillUI();
+
+    // Shooting
+    let angle = Math.atan2(mouse.wy-player.y, mouse.wx-player.x);
+    if(player.cd>0) player.cd -= dt;
+    else {
+        player.shotCount++;
+        let isPierce = (player.shotCount % 4 === 0) || (player.multiActive > 0);
+        
+        // Base Shot
+        bullets.push({
+            x:player.x, y:player.y, vx:Math.cos(angle)*player.bulletSpd, vy:Math.sin(angle)*player.bulletSpd,
+            pierce: isPierce, hitList: [] 
+        });
+
+        // Multi-Shot Logic
+        if(player.multiActive > 0) {
+            let spread = 0.2; // roughly 12 degrees
+            bullets.push({
+                x:player.x, y:player.y, vx:Math.cos(angle+spread)*player.bulletSpd, vy:Math.sin(angle+spread)*player.bulletSpd,
+                pierce: isPierce, hitList: [] 
+            });
+            bullets.push({
+                x:player.x, y:player.y, vx:Math.cos(angle-spread)*player.bulletSpd, vy:Math.sin(angle-spread)*player.bulletSpd,
+                pierce: isPierce, hitList: [] 
+            });
+        }
+
+        player.cd=player.fr;
+    }
+
+    // Bullets
+    bullets.forEach((b,i)=>{
+        b.x += b.vx * dt; 
+        b.y += b.vy * dt;
+        if(b.x<0||b.x>ROOM_WIDTH||b.y<0||b.y>ROOM_HEIGHT) { bullets.splice(i,1); return; }
+        for(let j=enemies.length-1; j>=0; j--){
+            let e = enemies[j];
+            if(getDistSq(e.x, e.y, b.x, b.y) < (e.size+15)**2) {
+                if(b.pierce && b.hitList.includes(e.id)) continue;
+                e.hp-=player.dmg; 
+                addFloat(Math.floor(player.dmg), e.x, e.y, b.pierce?"#00f2fe":"#fff");
+                particles.push({x:b.x, y:b.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:10, c:'#fff'});
+                if(b.pierce) b.hitList.push(e.id); else { bullets.splice(i,1); }
+                if(e.hp<=0) { killEnemy(e, j); checkWaveClear(); }
+                if(!b.pierce) break; 
+            }
+        }
+    });
+
+    // Enemies
+    enemies.forEach((e, index)=>{
+        let a = Math.atan2(player.y-e.y, player.x-e.x);
+        e.x += Math.cos(a)*e.spd * dt; 
+        e.y += Math.sin(a)*e.spd * dt; 
+        e.angle += e.spin * dt;
+        if(e.x<e.size) e.x=e.size; if(e.x>ROOM_WIDTH-e.size) e.x=ROOM_WIDTH-e.size;
+        if(e.y<e.size) e.y=e.size; if(e.y>ROOM_HEIGHT-e.size) e.y=ROOM_HEIGHT-e.size;
+
+        // Kamikaze Flash
+        if(e.type === 'kamikaze') {
+            e.color = (Math.floor(Date.now() / 100) % 2 === 0) ? '#ff0000' : '#ffffff';
+        }
+
+        if(getDistSq(e.x, e.y, player.x, player.y) < (e.size+20)**2) {
+            // GOD MODE CHECK
+            const isGod = document.getElementById('dev-god').checked;
+            if(isGod) {
+                if(e.type === 'kamikaze') {
+                    visuals.push({type:'shock', x:e.x, y:e.y, r:0, maxR:100, op:1});
+                    enemies.splice(index, 1);
+                    addFloat("BLOCKED", player.x, player.y, "#00ffaa");
+                }
+                return;
+            }
+
+            // ION SHIELD LOGIC
+            if(player.hasShield && player.shieldUp) {
+                player.shieldUp = false;
+                shake(15);
+                visuals.push({type:'shieldBreak', x:player.x, y:player.y, r:60, op:1});
+                
+                // Push enemy back significantly
+                let pushA = Math.atan2(e.y-player.y, e.x-player.x);
+                e.x += Math.cos(pushA) * 300; 
+                e.y += Math.sin(pushA) * 300;
+
+                // KAMIKAZE SPECIFIC: If it hit the shield, it explodes safely (or dies)
+                if(e.type === 'kamikaze') {
+                    visuals.push({type:'shock', x:e.x, y:e.y, r:0, maxR:100, op:1}); // Explode visual
+                    enemies.splice(index, 1); // Die
+                    addFloat("BLOCKED", player.x, player.y, "#00ffaa");
+                }
+                return; // NO DAMAGE TO PLAYER
+            }
+
+            // DAMAGE LOGIC (No Shield)
+            if(e.type === 'kamikaze') {
+                let dmg = Math.ceil(player.maxHp / 3);
+                player.hp -= dmg;
+                shake(30);
+                visuals.push({type:'shock', x:e.x, y:e.y, r:0, maxR:150, op:1}); 
+                enemies.splice(index, 1);
+                addFloat(`-${dmg}`, player.x, player.y, "#ff0000");
+                updateHUD();
+                if(player.hp<=0) { 
+                    gameState="DEAD"; hideAll(); screens.death.classList.remove('hidden'); 
+                    document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
+                }
+            } else {
+                player.hp-=1; updateHUD();
+                if(player.hp<=0) { 
+                    gameState="DEAD"; hideAll(); screens.death.classList.remove('hidden'); 
+                    document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
+                }
+            }
+        }
+    });
+
+    // XP
+    if(xpOrbs.length > MAX_XP) xpOrbs.shift(); // Hard Cap
+    xpOrbs.forEach((x,i)=>{
+        let dSq = getDistSq(player.x, player.y, x.x, x.y);
+        let pull = (player.hasMag && player.magActive>0);
+        
+        let ang = Math.atan2(player.y - x.y, player.x - x.x);
+
+        if(pull) {
+            // Magnet: Slightly Slower pull (Nerfed to 1.5)
+            x.vx += Math.cos(ang) * 1.5 * dt; 
+            x.vy += Math.sin(ang) * 1.5 * dt;
+            x.vx *= 0.92; x.vy *= 0.92;
+            x.x += x.vx * dt; x.y += x.vy * dt;
+        } else if (dSq < 60000) { 
+            // Passive Pickup: Stronger acceleration when close
+            let speed = 2.5 * dt; 
+            x.x += Math.cos(ang) * speed * 5; 
+            x.y += Math.sin(ang) * speed * 5;
+        }
+
+        if(dSq<900) { 
+            player.xp+=x.v; xpOrbs.splice(i,1);
+            if(gameState !== "DEAD") { checkLevelUp(); updateHUD(); }
+        }
+    });
+
+    // Cleanup
+    if(particles.length > MAX_PARTICLES) particles.shift(); // Hard Cap
+    particles.forEach((p,i)=>{ p.x+=p.vx * dt; p.y+=p.vy * dt; p.l -= dt; if(p.l<=0) particles.splice(i,1); });
+    floatTexts.forEach((t,i)=>{ t.y -= 1 * dt; t.l -= dt; if(t.l<=0) floatTexts.splice(i,1); });
+    visuals.forEach((v,i)=>{
+        if(v.type==='shock') { v.r+=20 * dt; v.op-=0.04 * dt; }
+        else if(v.type==='shieldBreak') { v.r+=4 * dt; v.op-=0.05 * dt; }
+        else if(v.type==='spawn') { v.r-=2 * dt; v.op-=0.05 * dt; }
+        if(v.op<=0 || v.r<0) visuals.splice(i,1);
+    });
+}
+
+function killEnemy(e, index) {
+    enemies.splice(index,1); shake(5); 
+    
+    let xpVal = (e.sides * e.sides) + (depthIndex * 20);
+    for(let i=0;i<3;i++) {
+        xpOrbs.push({ 
+            x:e.x, y:e.y, 
+            vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, 
+            v: xpVal / 3,
+            color: e.color // Inherit enemy color for distinct types
+        });
+    }
+    for(let k=0; k<6; k++) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:30, c:e.color, s:5});
+}
+
+/* --- RENDER --- */
+function renderBackground() {
+    ctx.fillStyle="#020205"; ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function drawRoom() {
+    const palettes = [
+        { bg: "#0a0a10", grid: "rgba(0, 242, 254, 0.05)", wall: "#00f2fe" },
+        { bg: "#100a0a", grid: "rgba(255, 42, 109, 0.05)", wall: "#ff2a6d" },
+        { bg: "#0a100a", grid: "rgba(0, 255, 170, 0.05)", wall: "#00ffaa" },
+        { bg: "#100a10", grid: "rgba(255, 0, 222, 0.05)", wall: "#ff00de" },
+        { bg: "#10100a", grid: "rgba(255, 165, 0, 0.05)", wall: "#ffa500" },
+        { bg: "#0a0a0a", grid: "rgba(255, 255, 255, 0.05)", wall: "#ffffff" }
+    ];
+    const pal = palettes[depthIndex % palettes.length];
+
+    ctx.fillStyle = "#020205"; ctx.fillRect(camera.x-100, camera.y-100, canvas.width+200, canvas.height+200);
+    ctx.fillStyle = pal.bg; ctx.fillRect(0,0,ROOM_WIDTH, ROOM_HEIGHT);
+
+    ctx.strokeStyle=pal.grid; ctx.lineWidth=2;
+    ctx.beginPath();
+    for(let x=0; x<=ROOM_WIDTH; x+=100) { ctx.moveTo(x, 0); ctx.lineTo(x, ROOM_HEIGHT); }
+    for(let y=0; y<=ROOM_HEIGHT; y+=100) { ctx.moveTo(0, y); ctx.lineTo(ROOM_WIDTH, y); }
+    ctx.stroke();
+
+    ctx.strokeStyle = pal.wall; ctx.lineWidth = 10;
+    ctx.shadowBlur = 20; ctx.shadowColor = pal.wall; ctx.strokeRect(0,0,ROOM_WIDTH,ROOM_HEIGHT); ctx.shadowBlur = 0;
+
+    // MAGNET LINES
+    if(player.hasMag && player.magActive > 0) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random()*0.5 + 0.2})`;
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 10; ctx.shadowColor = "#fff";
+        ctx.beginPath();
+        xpOrbs.forEach(orb => {
+            if(!isOnScreen(orb)) return; // Culling
+            if(getDistSq(player.x, player.y, orb.x, orb.y) < 500000) {
+                ctx.moveTo(player.x, player.y);
+                ctx.lineTo(orb.x, orb.y);
+            }
+        });
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // DRAW PORTAL
+    if(portal.active) {
+        ctx.save(); 
+        ctx.translate(portal.x, portal.y); 
+        
+        ctx.save();
+        ctx.rotate(portal.angle);
+        ctx.strokeStyle = "#00ffaa"; ctx.lineWidth = 5; ctx.shadowBlur = 20; ctx.shadowColor = "#00ffaa";
+        ctx.beginPath();
+        for(let i=0; i<8; i++) {
+            let th = (i/8)*Math.PI*2;
+            ctx[i===0?'moveTo':'lineTo'](Math.cos(th)*portal.r, Math.sin(th)*portal.r);
+        }
+        ctx.closePath(); ctx.stroke();
+        
+        ctx.globalAlpha = 0.3 + Math.sin(Date.now()/200)*0.2;
+        ctx.fillStyle = "#00ffaa"; ctx.fill();
+        ctx.restore(); // Restore rotation
+        
+        ctx.globalAlpha = 1;
+        
+        ctx.fillStyle = "#fff"; ctx.font="bold 16px Montserrat";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.shadowBlur = 5; ctx.shadowColor = "#000";
+        ctx.fillText("ENTER", 0, 0); 
+
+        ctx.restore(); // Restore translation
+    }
+
+    // Visuals
+    visuals.forEach(v => {
+        if(v.type==='shock') { ctx.strokeStyle=`rgba(0,242,254,${v.op})`; ctx.lineWidth=8; ctx.beginPath(); ctx.arc(v.x,v.y,v.r,0,Math.PI*2); ctx.stroke(); }
+        else if(v.type==='shieldBreak') { ctx.strokeStyle=`rgba(0,255,170,${v.op})`; ctx.lineWidth=5; ctx.beginPath(); ctx.arc(v.x,v.y,v.r,0,Math.PI*2); ctx.stroke(); }
+        else if(v.type==='spawn') { ctx.fillStyle=`rgba(255,255,255,${v.op})`; ctx.beginPath(); ctx.arc(v.x,v.y,v.r,0,Math.PI*2); ctx.fill(); }
+    });
+
+    if(player.hasShield && player.shieldUp) {
+        ctx.save(); ctx.translate(player.x, player.y);
+        ctx.strokeStyle = `rgba(0, 255, 170, ${0.4 + Math.sin(Date.now()/150)*0.2})`; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0,0, 50, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+    }
+
+    // BLOOM ON
+    const useBloom = gameSettings.bloom; 
+    if(useBloom) ctx.globalCompositeOperation = 'lighter';
+    
+    // Draw XP Orbs
+    xpOrbs.forEach(x=>{ 
+        if(!isOnScreen(x)) return;
+        if(useBloom) { ctx.shadowBlur=10; ctx.shadowColor= x.color || "#00f2fe"; }
+        ctx.fillStyle= x.color || "#00f2fe"; 
+        ctx.beginPath(); 
+        let r = 3 + (x.v / 5); 
+        if(r > 8) r = 8;
+        ctx.arc(x.x,x.y, r, 0,Math.PI*2); 
+        ctx.fill(); 
+        if(useBloom) ctx.shadowBlur=0; 
+    });
+    
+    particles.forEach(p=>{ 
+        if(!isOnScreen(p)) return;
+        ctx.fillStyle=p.c; ctx.globalAlpha=p.l/30; ctx.beginPath(); ctx.arc(p.x,p.y,p.s||3,0,Math.PI*2); ctx.fill(); 
+    });
+    ctx.globalAlpha=1;
+    
+    if(useBloom) { ctx.shadowBlur = 10; }
+    bullets.forEach(b=>{ 
+        if(!isOnScreen(b)) return;
+        ctx.fillStyle = b.pierce ? "#fff" : "#00f2fe"; 
+        if(useBloom) ctx.shadowColor = ctx.fillStyle;
+        ctx.beginPath(); ctx.arc(b.x,b.y,4,0,Math.PI*2); ctx.fill(); 
+    });
+    ctx.shadowBlur=0;
+
+    enemies.forEach(e=>{
+        if(!isOnScreen(e)) return;
+        ctx.strokeStyle = e.color; ctx.lineWidth = 3; ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.angle);
+        if(useBloom) { ctx.shadowBlur=10; ctx.shadowColor=e.color; }
+        ctx.beginPath();
+        for(let i=0; i<e.sides; i++) {
+            const theta = (i / e.sides) * Math.PI * 2;
+            ctx[i===0?'moveTo':'lineTo'](Math.cos(theta)*e.size, Math.sin(theta)*e.size);
+        }
+        ctx.closePath(); ctx.stroke(); ctx.restore(); ctx.shadowBlur=0;
+    });
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Player (No dot)
+    ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(Math.atan2(mouse.wy - player.y, mouse.wx - player.x));
+    ctx.fillStyle = "#000"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 3;
+    ctx.shadowBlur=15; ctx.shadowColor="#00f2fe";
+    ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(-15, 15); ctx.lineTo(-8, 0); ctx.lineTo(-15, -15); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.restore();
+
+    ctx.font = "900 20px 'Montserrat'"; ctx.textAlign="center";
+    floatTexts.forEach(t=>{ 
+        if(!isOnScreen(t)) return;
+        ctx.fillStyle=t.c; ctx.globalAlpha=t.l/60; ctx.fillText(t.t, t.x, t.y); 
+    });
+    ctx.globalAlpha=1;
+}
+
+window.addEventListener('resize', ()=>{ canvas.width=window.innerWidth; canvas.height=window.innerHeight; if(gameState==="MENU") renderBackground(); });
+window.addEventListener('keydown', e=>{ 
+    if(e.key==='w') keys.w=true; if(e.key==='a') keys.a=true; if(e.key==='s') keys.s=true; if(e.key==='d') keys.d=true; 
+    if(e.key===' ') { keys.space=true; e.preventDefault(); } if(e.key==='q') keys.q=true; if(e.key==='e') keys.e=true;
+    if(e.key==='Escape') { 
+        if(!screens.settings.classList.contains('hidden')) closeSettings();
+        else if(!screens.learn.classList.contains('hidden')) goHome();
+        else togglePause();
+    }
+    // DEV CONSOLE TOGGLE (Backtick)
+    if(e.key === '`' || e.key === '~') {
+        const console = document.getElementById('dev-console');
+        console.style.display = (console.style.display === 'block') ? 'none' : 'block';
+    }
+});
+window.addEventListener('keyup', e=>{ 
+    if(e.key==='w') keys.w=false; if(e.key==='a') keys.a=false; if(e.key==='s') keys.s=false; if(e.key==='d') keys.d=false; 
+    if(e.key===' ') keys.space=false; if(e.key==='q') keys.q=false; if(e.key==='e') keys.e=false;
+});
+window.addEventListener('mousemove', e=>{ 
+    const rect = canvas.getBoundingClientRect(); mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top; 
+});
+
+/* --- DEV CONSOLE SCRIPTS --- */
+function updatePlayerStat(stat, val) {
+    player[stat] = parseFloat(val);
+    addFloat(`${stat.toUpperCase()} UPDATED`, player.x, player.y, "#00f2fe");
+}
+
+function devSkipWave() {
+    if(gameState !== "PLAY" || portal.active) return; // Prevent skipping past 10
+    // KILL ALL ENEMIES TO TRIGGER NATURAL END (WHICH HANDLES PORTAL)
+    enemies.forEach(e => {
+        for(let i=0;i<3;i++) xpOrbs.push({ x:e.x, y:e.y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, v:(e.sides*5)/3 });
+    });
+    enemies = [];
+    addFloat("WAVE WIPED", player.x, player.y, "#ff9900");
+    checkWaveClear(); // Trigger next step logic
+}
+
+function devNextZone() {
+    if(gameState !== "PLAY") return;
+    enemies = [];
+    depthIndex++;
+    if(depthIndex >= DEPTH_NAMES.length) depthIndex = 0;
+    startDepth();
+}
+
+function devUnlockAll() {
+    player.hasShock = true;
+    player.hasMag = true;
+    player.hasShield = true;
+    player.shieldUp = true;
+    player.hasMulti = true;
+    updateSkillUI();
+    addFloat("MODULES UNLOCKED", player.x, player.y, "#ff00de");
+}
+
+function devInstantLevel() {
+    if(gameState !== "PLAY") return;
+    player.xp = player.req;
+    checkLevelUp();
+    addFloat("LEVEL UP READY", player.x, player.y, "#00ffaa");
+}
+
+// Monkey Patch Trivia for Skip
+const originalStartTrivia = startTrivia;
+startTrivia = function() {
+    const skip = document.getElementById('dev-trivia').checked;
+    if(skip) {
+        // Skip trivia logic, go straight to upgrade
+        // Logic copied from checkAnswer(true)
+        const unacquired = abilitiesDB.filter(a => {
+            if(a.id==='shock' && player.hasShock) return false;
+            if(a.id==='mag' && player.hasMag) return false;
+            if(a.id==='multi' && player.hasMulti) return false;
+            if(a.id==='shield' && player.hasShield) return false;
+            return true;
+        });
+
+        if(player.lvl % 4 === 0 && unacquired.length > 0) triggerUnlock(unacquired);
+        else triggerUpgrade();
+    } else {
+        originalStartTrivia();
+    }
+};
+
+// Dev Update Loop Hook
+window.devUpdate = function() {
+    const isGod = document.getElementById('dev-god').checked;
+    if(isGod && gameState === "PLAY") {
+        // Instant Reload
+        player.cd = 0;
+        // Instant Skill Charge
+        if(player.hasShock) player.shockTimer = player.shockMax;
+        if(player.hasMag && player.magActive <= 0) player.magTimer = player.magMax;
+        if(player.hasMulti && player.multiActive <= 0) player.multiTimer = player.multiMax;
+        if(player.hasShield && !player.shieldUp) player.shieldTimer = 0; // Will trigger auto recharge logic in update
+        player.hp = player.maxHp;
+    }
+};
+
+canvas.width=window.innerWidth; canvas.height=window.innerHeight; renderBackground();
+
+</script>
+</body>
+</html>
