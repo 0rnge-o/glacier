@@ -56,7 +56,33 @@
         .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.85); z-index: 3; transition: height 0.1s linear; }
         
         .ico-shock { width: 24px; height: 24px; border-radius: 50%; border: 3px solid #00f2fe; box-shadow: 0 0 10px #00f2fe; }
-        .ico-mag { width: 22px; height: 16px; border-bottom: 4px solid #fff; border-left: 4px solid #fff; border-right: 4px solid #fff; border-top: 0; border-radius: 0 0 50% 50%; box-shadow: 0 0 10px #fff; margin-top: -6px; }
+        .ico-mag { 
+            width: 24px; height: 24px;
+            position: relative;
+        }
+        .ico-mag::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 8px;
+            background: #fff;
+            transform-origin: center;
+            box-shadow: 0 0 5px #fff;
+        }
+        .ico-mag::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 5px #fff;
+        }
         .ico-shield { width: 22px; height: 22px; border: 4px solid #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa; background: rgba(0, 255, 170, 0.2); }
         .ico-multi { width: 6px; height: 18px; background: #ff9900; box-shadow: 10px 0 0 #ff9900, -10px 0 0 #ff9900, 0 0 10px #ff9900; }
 
@@ -77,6 +103,7 @@
         .t-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .t-btn { background: #111; border: 1px solid #555; color: #fff; padding: 20px; font-size: 16px; cursor: pointer; font-weight: bold; transition:0.2s;}
         .t-btn:hover { background: #fff; color: #000; border-color: #fff; }
+        .t-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .t-status { font-size: 16px; color: #ff2a6d; margin-bottom: 15px; height: 20px; letter-spacing: 2px; font-weight: 900; }
 
         /* PAUSE & SETTINGS */
@@ -104,6 +131,50 @@
         #depth-screen {
             background: #000;
         }
+        
+        /* ZONE INTRO SCREEN */
+        #zone-intro {
+            background: rgba(0,0,0,0.98);
+        }
+        .zone-content {
+            background: #0a0a0f;
+            border: 2px solid #00f2fe;
+            padding: 40px;
+            max-width: 900px;
+            width: 80%;
+            box-shadow: 0 0 50px rgba(0, 242, 254, 0.3);
+            text-align: center;
+        }
+        .zone-title {
+            font-size: 48px;
+            color: #00f2fe;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 15px #00f2fe;
+        }
+        .zone-description {
+            font-size: 20px;
+            line-height: 1.6;
+            color: #ccc;
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #333;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            text-align: left;
+        }
+        .continue-prompt {
+            font-size: 18px;
+            color: #00ffaa;
+            margin-top: 30px;
+            animation: pulse 1.5s infinite;
+            text-shadow: 0 0 10px #00ffaa;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
 
         /* --- DEV CONSOLE STYLES --- */
         #dev-console {
@@ -118,6 +189,127 @@
         .dev-btn { width: 100%; background: #222; border: 1px solid #00f2fe; color: #fff; padding: 5px; cursor: pointer; margin-top: 5px; font-family: monospace; }
         .dev-btn:hover { background: #00f2fe; color: #000; }
         .dev-chk { cursor: pointer; }
+        
+        /* ARCHIVE TABS */
+        .archive-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .archive-tab {
+            background: #111;
+            border: 1px solid #444;
+            color: #ccc;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .archive-tab:hover {
+            background: #222;
+            border-color: #00f2fe;
+        }
+        .archive-tab.active {
+            background: #00f2fe;
+            color: #000;
+            border-color: #00f2fe;
+            box-shadow: 0 0 10px #00f2fe;
+        }
+        .archive-content {
+            display: none;
+            width: 80%;
+            overflow-y: auto;
+            max-height: 60vh;
+            padding-bottom: 50px;
+        }
+        .archive-content.active {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .question-count {
+            color: #00ffaa;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        /* ZOOM CONTROLS */
+        .zoom-slider {
+            width: 100%;
+            height: 20px;
+            margin: 10px 0;
+            background: #111;
+            border-radius: 10px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #00f2fe;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00f2fe;
+        }
+        .zoom-preview {
+            width: 200px;
+            height: 150px;
+            margin: 20px auto;
+            border: 2px solid #00f2fe;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00f2fe;
+            font-size: 14px;
+        }
+        .zoom-value {
+            color: #00f2fe;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* MOUSE TYPE SELECTOR */
+        .mouse-type-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            width: 100%;
+        }
+        .mouse-option {
+            padding: 20px;
+            background: #111;
+            border: 1px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .mouse-option:hover {
+            border-color: #00f2fe;
+            background: #1a1a20;
+        }
+        .mouse-option.active {
+            border-color: #00f2fe;
+            background: rgba(0, 242, 254, 0.1);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+        .mouse-preview {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 30px;
+        }
+        .mouse-preview.crosshair { color: #fff; }
+        .mouse-preview.pointer { color: #00f2fe; }
+        .mouse-preview.circle { color: #fff; }
     </style>
 </head>
 <body>
@@ -163,6 +355,17 @@
         <button class="dev-btn" onclick="devUnlockAll()">UNLOCK ALL MODULES</button>
     </div>
 
+    <!-- ZONE INTRODUCTION SCREEN -->
+    <div id="zone-intro" class="overlay hidden">
+        <div class="zone-content">
+            <div class="zone-title" id="zone-title">ZONE NAME</div>
+            <div class="zone-description" id="zone-description">
+                Loading zone description...
+            </div>
+            <div class="continue-prompt" id="zone-continue">Press ANY KEY or CLICK to continue...</div>
+        </div>
+    </div>
+
     <div id="start-screen" class="overlay">
         <h1>GLACIER CRAWLER</h1>
         <h2 style="font-size: 24px; letter-spacing: 2px;">DEEP DIVE PROTOCOL</h2>
@@ -174,8 +377,36 @@
     <div id="settings-screen" class="overlay hidden">
         <h1>SETTINGS</h1>
         <div id="settings-content">
-            <button class="menu-btn" id="btn-bloom" onclick="toggleBloom()" style="margin:0; width:100%">GRAPHICS: HIGH</button>
+            <button class="menu-btn" id="btn-bloom" onclick="toggleBloom()" style="margin:0; width:100%">
+                GRAPHICS: LOW
+            </button>
             <button class="menu-btn" id="btn-fps" onclick="toggleFps()" style="margin:0; width:100%">FPS: OFF</button>
+            
+            <!-- MOUSE TYPE SELECTOR -->
+            <h3 style="color:#00f2fe; margin-top: 30px; width: 100%; text-align: center;">MOUSE TYPE</h3>
+            <div class="mouse-type-selector">
+                <div class="mouse-option active" onclick="changeMouseType('crosshair')">
+                    <div class="mouse-preview crosshair">+</div>
+                    <div>Crosshair</div>
+                </div>
+                <div class="mouse-option" onclick="changeMouseType('pointer')">
+                    <div class="mouse-preview pointer">☝</div>
+                    <div>Pointer</div>
+                </div>
+                <div class="mouse-option" onclick="changeMouseType('circle')">
+                    <div class="mouse-preview circle">○</div>
+                    <div>Circle</div>
+                </div>
+            </div>
+            
+            <!-- ZOOM CONTROLS -->
+            <h3 style="color:#00f2fe; margin-top: 30px; width: 100%; text-align: center;">ZOOM LEVEL</h3>
+            <input type="range" min="0.5" max="2" step="0.1" value="1" class="zoom-slider" id="zoom-slider" oninput="updateZoomPreview(this.value)">
+            <div class="zoom-value" id="zoom-value">100%</div>
+            <div class="zoom-preview" id="zoom-preview">
+                <div>Zoom Preview</div>
+            </div>
+            <button class="menu-btn" onclick="applyZoom()" style="margin-top: 10px; width: 100%">APPLY ZOOM</button>
         </div>
         <button class="menu-btn" onclick="closeSettings()">BACK</button>
     </div>
@@ -216,7 +447,22 @@
     <div id="learn-screen" class="overlay hidden">
         <h1 style="font-size: 40px; margin-bottom: 20px;">GLACIER ARCHIVE</h1>
         <div style="margin-bottom:10px; color:#aaa">CLICK CARDS TO REVEAL DATA</div>
-        <div id="fact-container" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; width:80%; overflow-y:auto; max-height:70vh; padding-bottom:50px;"></div>
+        
+        <!-- TAB NAVIGATION -->
+        <div class="archive-tabs" id="archive-tabs">
+            <div class="archive-tab active" onclick="switchArchiveTab('all')">ALL QUESTIONS</div>
+            <div class="archive-tab" onclick="switchArchiveTab('accum')">ZONE 1: ACCUMULATION</div>
+            <div class="archive-tab" onclick="switchArchiveTab('eq')">ZONE 2: EQUILIBRIUM</div>
+            <div class="archive-tab" onclick="switchArchiveTab('crev')">ZONE 3: CREVASSES</div>
+            <div class="archive-tab" onclick="switchArchiveTab('land')">ZONE 4: LANDFORMS</div>
+            <div class="archive-tab" onclick="switchArchiveTab('abl')">ZONE 5: ABLATION</div>
+            <div class="archive-tab" onclick="switchArchiveTab('mor')">ZONE 6: MORAINE</div>
+            <div class="archive-tab" onclick="switchArchiveTab('general')">GENERAL KNOWLEDGE</div>
+        </div>
+        
+        <!-- SINGLE CONTENT CONTAINER (Dynamically filled) -->
+        <div id="fact-container" class="archive-content active"></div>
+        
         <button class="menu-btn" onclick="goHome()">BACK</button>
     </div>
 
@@ -276,7 +522,8 @@ const screens = {
     trivia: document.getElementById('trivia-overlay'),
     pause: document.getElementById('pause-screen'),
     learn: document.getElementById('learn-screen'),
-    depth: document.getElementById('depth-screen')
+    depth: document.getElementById('depth-screen'),
+    zoneIntro: document.getElementById('zone-intro')
 };
 
 // CONSTANTS
@@ -290,17 +537,37 @@ const DEPTH_NAMES = [
     "ZONE OF ACCUMULATION",
     "EQUILIBRIUM LINE",
     "CREVASSES",
-    "CIRQUE",
+    "LANDFORMS & CIRQUE",
     "ZONE OF ABLATION",
-    "MORAINE"
+    "MORAINE DEPOSITS"
+];
+
+// Zone descriptions for educational intros
+const ZONE_DESCRIPTIONS = [
+    `The <span style="color:#00f2fe">Zone of Accumulation</span> is where snowfall exceeds melting. Fresh snow compresses into firn and eventually glacial ice through pressure. This zone is characterized by positive mass balance and serves as the glacier's "fuel tank." The snowline marks the boundary between accumulation and ablation zones.`,
+    
+    `The <span style="color:#00f2fe">Equilibrium Line</span> represents the altitude where accumulation equals ablation annually. Below this line, the glacier loses mass; above it, gains mass. This dynamic balance point fluctuates with climate conditions and is critical for predicting glacier health and behavior.`,
+    
+    `<span style="color:#00f2fe">Crevasses</span> are deep fractures in glacial ice caused by tensile stress. They form when ice moves over uneven terrain or changes velocity. Despite appearances, crevasses rarely extend beyond 50 meters deep due to plastic ice flow under pressure. They're navigation hazards but important for studying internal glacier structure.`,
+    
+    `Glacial <span style="color:#00f2fe">Landforms</span> like cirques, aretes, and horns result from erosional processes. A cirque is an amphitheater-shaped basin carved by ice accumulation and rotational sliding. When multiple cirques converge, they create distinctive sharp ridges and pyramidal peaks that define alpine landscapes.`,
+    
+    `The <span style="color:#00f2fe">Zone of Ablation</span> is where ice loss exceeds accumulation through melting, sublimation, and calving. Ablation processes include surface melt, basal melt from geothermal heat, and frontal ablation at glacier termini. This zone determines a glacier's net mass balance and retreat rate.`,
+    
+    `<span style="color:#00f2fe">Moraines</span> are accumulations of glacially transported debris. Terminal moraines mark maximum ice extent, lateral moraines form along glacier edges, and medial moraines result from merging glaciers. These deposits preserve climate history and influence post-glacial ecosystems.`
 ];
 
 // STATE
 let gameState="MENU", previousState="MENU"; 
-let gameSettings = { bloom: true, fps: false };
+let gameSettings = { 
+    bloom: false, 
+    fps: false,
+    mouseType: 'crosshair',
+    zoomLevel: 1.0
+};
 let animationFrameId, transitionTimer;
 let keys = { w:false, a:false, s:false, d:false, space:false, q:false, e:false };
-let mouse = { x: 0, y: 0, wx: 0, wy: 0 };
+let mouse = { x: 0, y: 0, wx: 0, wy: 0, down: false };
 let camera = { x: 0, y: 0 };
 let screenShake = 0;
 
@@ -312,6 +579,8 @@ let bullets=[], enemies=[], particles=[], xpOrbs=[], floatTexts=[], visuals=[];
 let portal = { active: false, x: 0, y: 0, r: 80, angle: 0 };
 let spawnTimer = 0;
 let askedQuestions = []; 
+let triviaAnswered = false;
+let triviaLocked = false; // NEW: Prevent multiple answer clicks
 
 // TIME & FPS
 let lastTime = 0;
@@ -320,64 +589,185 @@ let frames = 0;
 
 /* --- DATA --- */
 const abilitiesDB = [
-    { id: 'shock', name: 'SHOCKWAVE', desc: 'Press [SPACE] to blast enemies.', color: '#00f2fe' },
-    { id: 'mag', name: 'GRAVITY WELL', desc: 'Press [Q] to pull XP.', color: '#fff' },
-    { id: 'multi', name: 'MULTI-SHOT', desc: 'Press [E] for 3x shots (2s).', color: '#ff9900' },
-    { id: 'shield', name: 'ION SHIELD', desc: 'Passively blocks damage.', color: '#00ffaa' }
+    { id: 'shock', name: 'Shockwave', desc: 'Press SPACE to blast nearby enemies away.', color: '#00f2fe' },
+    { id: 'mag', name: 'Gravity Well', desc: 'Press Q to pull XP orbs toward you.', color: '#fff' },
+    { id: 'multi', name: 'Multi-Shot', desc: 'Press E to fire three shots at once.', color: '#ff9900' },
+    { id: 'shield', name: 'Energy Shield', desc: 'Blocks one hit, then recharges.', color: '#00ffaa' }
 ];
 
+// SIMPLE UPGRADES WITH CLEAR NAMES AND DESCRIPTIONS
 const upgradesDB = [
-    { n: "Overclock", d: "Fire Rate +15%", apply: p=>{ p.fr=Math.max(3, p.fr*0.85); }, undo: p=>{ p.fr/=0.85; } },
-    { n: "High Voltage", d: "Damage +25%", apply: p=>{ p.dmg*=1.25; }, undo: p=>{ p.dmg/=1.25; } },
-    { n: "Nanobots", d: "MaxHP +30 & Heal", apply: p=>{ p.maxHp+=30; p.hp=p.maxHp; }, undo: p=>{ p.maxHp-=30; if(p.hp>p.maxHp)p.hp=p.maxHp; } },
-    { n: "Thrusters", d: "Speed +10%", apply: p=>{ p.spd*=1.1; }, undo: p=>{ p.spd/=1.1; } },
-    { n: "Accelerator", d: "Bullet Speed +20%", apply: p=>{ p.bulletSpd*=1.2; }, undo: p=>{ p.bulletSpd/=1.2; } },
+    { n: "Faster Shooting", d: "Shoot 15% faster", apply: p=>{ p.fr=Math.max(3, p.fr*0.85); }, undo: p=>{ p.fr/=0.85; } },
+    { n: "More Damage", d: "Bullets do 25% more damage", apply: p=>{ p.dmg*=1.25; }, undo: p=>{ p.dmg/=1.25; } },
+    { n: "More Health", d: "Max health +30 and heal fully", apply: p=>{ p.maxHp+=30; p.hp=p.maxHp; }, undo: p=>{ p.maxHp-=30; if(p.hp>p.maxHp)p.hp=p.maxHp; } },
+    { n: "Faster Movement", d: "Move 10% faster", apply: p=>{ p.spd*=1.1; }, undo: p=>{ p.spd/=1.1; } },
+    { n: "Faster Bullets", d: "Bullets move 20% faster", apply: p=>{ p.bulletSpd*=1.2; }, undo: p=>{ p.bulletSpd/=1.2; } },
     // Conditional
-    { req: 'shock', n: "Core Reactor", d: "Blast Dmg +50", apply: p=>{ p.blastDmg+=50; }, undo: p=>{ p.blastDmg-=50; } },
-    { req: 'shock', n: "Amp Coil", d: "Shock Cooldown -20%", apply: p=>p.shockMax*=0.8, undo: p=>p.shockMax/=0.8 },
-    { req: 'shock', n: "Gigawave", d: "Shock Radius +25%", apply: p=>p.shockRad*=1.25, undo: p=>p.shockRad/=1.25 },
-    { req: 'mag', n: "Superconductor", d: "Magnet Cooldown -20%", apply: p=>p.magMax*=0.8, undo: p=>p.magMax/=0.8 },
-    { req: 'shield', n: "Rapid Charge", d: "Shield Recharge -20%", apply: p=>p.shieldMax*=0.8, undo: p=>p.shieldMax/=0.8 },
-    { req: 'multi', n: "Extended Mag", d: "Multi-Shot Duration +1s", apply: p=>p.multiDur+=60, undo: p=>p.multiDur-=60 },
-    { req: 'multi', n: "Rapid Reload", d: "Multi-Shot Cooldown -20%", apply: p=>p.multiMax*=0.8, undo: p=>p.multiMax/=0.8 }
+    { req: 'shock', n: "Stronger Shockwave", d: "Shockwave damage +50", apply: p=>{ p.blastDmg+=50; }, undo: p=>{ p.blastDmg-=50; } },
+    { req: 'shock', n: "Faster Shockwave", d: "Shockwave cooldown 20% faster", apply: p=>p.shockMax*=0.8, undo: p=>p.shockMax/=0.8 },
+    { req: 'shock', n: "Bigger Shockwave", d: "Shockwave radius 25% bigger", apply: p=>p.shockRad*=1.25, undo: p=>p.shockRad/=1.25 },
+    { req: 'mag', n: "Faster Gravity", d: "Gravity Well cooldown 20% faster", apply: p=>p.magMax*=0.8, undo: p=>p.magMax/=0.8 },
+    { req: 'shield', n: "Faster Shield", d: "Shield recharges 20% faster", apply: p=>p.shieldMax*=0.8, undo: p=>p.shieldMax/=0.8 },
+    { req: 'multi', n: "Longer Multi-Shot", d: "Multi-Shot lasts 1 second longer", apply: p=>p.multiDur+=60, undo: p=>p.multiDur-=60 },
+    { req: 'multi', n: "Faster Multi-Shot", d: "Multi-Shot cooldown 20% faster", apply: p=>p.multiMax*=0.8, undo: p=>p.multiMax/=0.8 }
 ];
 
+// IMPROVED TRIVIA QUESTIONS WITH BETTER FORMATTING
 const triviaQuestions = [
-    // General
-    { id: 1, q: "What percentage of Earth's freshwater is in glaciers?", a: ["69%"], tags: ["general"] },
-    { id: 2, q: "What causes glaciers to move downhill?", a: ["Gravity"], tags: ["general"] },
-    { id: 3, q: "What gas in ice cores reveals past climates?", a: ["CO2"], tags: ["general"] },
-    { id: 4, q: "What is the study of glaciers called?", a: ["Glaciology"], tags: ["general"] },
-    { id: 5, q: "Which ice sheet holds the most freshwater?", a: ["Antarctic"], tags: ["general"] },
-    
-    // Accumulation
-    { id: 6, q: "Does snow build up or melt in the Zone of Accumulation?", a: ["Builds up"], tags: ["accum"] },
-    { id: 7, q: "What is snow that survived one summer called?", a: ["Firn"], tags: ["accum"] },
-    { id: 8, q: "What color is highly compressed glacial ice?", a: ["Blue"], tags: ["accum"] },
-    
-    // Equilibrium
-    { id: 9, q: "What line separates accumulation and ablation?", a: ["Equilibrium Line"], tags: ["eq"] },
-    { id: 10, q: "Is glacial mass balance zero at the Equilibrium Line?", a: ["Yes"], tags: ["eq"] },
-    
-    // Crevasses
-    { id: 11, q: "What are deep cracks in a glacier called?", a: ["Crevasses"], tags: ["crev"] },
-    { id: 12, q: "Do crevasses form in the brittle or plastic zone?", a: ["Brittle Top"], tags: ["crev"] },
-    { id: 13, q: "Can crevasses be hidden by snow bridges?", a: ["Yes"], tags: ["crev"] },
-    
-    // Cirque
-    { id: 14, q: "What is a bowl-shaped depression at a glacier head?", a: ["Cirque"], tags: ["cirque"] },
-    { id: 15, q: "Are Cirques formed by erosion?", a: ["Yes"], tags: ["cirque"] },
-    { id: 16, q: "What is a sharp ridge between two cirques?", a: ["Arete"], tags: ["cirque"] },
-    
-    // Ablation
-    { id: 17, q: "What happens in the Zone of Ablation?", a: ["Ice Loss"], tags: ["abl"] },
-    { id: 18, q: "Solid ice turning directly to gas is called?", a: ["Sublimation"], tags: ["abl"] },
-    { id: 19, q: "Ice chunks breaking into the ocean is called?", a: ["Calving"], tags: ["abl"] },
-    
-    // Moraine
-    { id: 20, q: "What is the rock debris carried by a glacier?", a: ["Moraine"], tags: ["mor"] },
-    { id: 21, q: "Debris at the end of a glacier is what Moraine?", a: ["Terminal"], tags: ["mor"] },
-    { id: 22, q: "Is Moraine sediment sorted by size?", a: ["No (Unsorted)"], tags: ["mor"] }
+    {
+        id: 1,
+        q: "A glacier begins flowing faster each year despite no increase in temperature. What is the most likely explanation?",
+        a: ["Basal friction has decreased due to meltwater lubrication"],
+        d: [
+            "Ice crystals have grown larger from pressure",
+            "Snow density in the accumulation zone increased",
+            "Surface albedo has significantly increased"
+        ],
+        tags: ["general"]
+    },
+    {
+        id: 2,
+        q: "Two glaciers receive equal snowfall, but one grows while the other shrinks. What must be different between them?",
+        a: ["Their total ablation rate differs significantly"],
+        d: [
+            "The color of their ice varies",
+            "Their crevasse patterns are different",
+            "The thickness of their firn layers"
+        ],
+        tags: ["general"]
+    },
+    {
+        id: 3,
+        q: "Which observation best indicates a glacier's accumulation zone has expanded?",
+        a: ["The equilibrium line has moved downslope to a lower elevation"],
+        d: [
+            "Crevasses have widened near the terminus",
+            "The glacier has begun calving icebergs",
+            "Surface debris has thickened significantly"
+        ],
+        tags: ["accum"]
+    },
+    {
+        id: 4,
+        q: "After several consecutive colder summers, what change would appear FIRST in the accumulation zone?",
+        a: ["Greater thickness of the firn layer"],
+        d: [
+            "Increased basal sliding velocity",
+            "More extensive terminal moraine growth",
+            "Deeper crevasse formation"
+        ],
+        tags: ["accum"]
+    },
+    {
+        id: 5,
+        q: "A glacier's equilibrium line rises for multiple consecutive years. What long-term trend should follow?",
+        a: ["Net mass loss increases as the ablation zone expands"],
+        d: [
+            "Basal temperatures drop significantly",
+            "Ice flow velocity reaches its maximum",
+            "Moraine sediment becomes better sorted"
+        ],
+        tags: ["eq"]
+    },
+    {
+        id: 6,
+        q: "What condition could keep a glacier stable despite unusually warm summers?",
+        a: ["Exceptionally high winter snowfall"],
+        d: [
+            "Thick surface debris insulating the ice",
+            "Exceptionally low ice density",
+            "Very steep valley walls"
+        ],
+        tags: ["eq"]
+    },
+    {
+        id: 7,
+        q: "A glacier enters a significantly steeper valley section. What surface change is most likely?",
+        a: ["Increased crevasse formation due to tensile stress"],
+        d: [
+            "Ice becomes more transparent and blue",
+            "Overall flow velocity decreases",
+            "Firn compacts into ice more rapidly"
+        ],
+        tags: ["crev"]
+    },
+    {
+        id: 8,
+        q: "Why do crevasses rarely extend more than 50 meters deep into glacier ice?",
+        a: ["Ice flows plastically under pressure at depth"],
+        d: [
+            "Meltwater refreezes and seals the cracks",
+            "Temperature increases with depth, making ice ductile",
+            "Rock debris naturally fills the fractures"
+        ],
+        tags: ["crev"]
+    },
+    {
+        id: 9,
+        q: "Which landscape feature provides the STRONGEST evidence of long-term glacial erosion?",
+        a: ["A classic U-shaped valley with steep sides"],
+        d: [
+            "A V-shaped river valley",
+            "A braided river system",
+            "A broad floodplain"
+        ],
+        tags: ["land"]
+    },
+    {
+        id: 10,
+        q: "Two cirques continue eroding backward toward each other. What landform typically remains between them?",
+        a: ["A sharp, narrow ridge called an arête"],
+        d: [
+            "A flat-bottomed basin",
+            "A debris fan formation",
+            "A meltwater channel network"
+        ],
+        tags: ["land"]
+    },
+    {
+        id: 11,
+        q: "A glacier loses mass despite air temperatures staying below freezing. Which process explains this?",
+        a: ["Sublimation - direct ice-to-vapor transition"],
+        d: [
+            "Surface melting from solar radiation",
+            "Basal freezing adding ice at the bottom",
+            "Firn compaction reducing volume"
+        ],
+        tags: ["abl"]
+    },
+    {
+        id: 12,
+        q: "Which factor most strongly increases glacier ablation rates?",
+        a: ["Longer duration of the melt season"],
+        d: [
+            "Higher snow albedo (reflectivity)",
+            "Steeper slopes in accumulation zone",
+            "Lower overall ice density"
+        ],
+        tags: ["abl"]
+    },
+    {
+        id: 13,
+        q: "Glacial debris contains unsorted mixture of boulders and clay in same layer. What does this indicate?",
+        a: ["Direct transport by ice without water sorting"],
+        d: [
+            "Sorting by meltwater streams",
+            "Wind deposition and sorting",
+            "Multiple freeze-thaw cycles"
+        ],
+        tags: ["mor"]
+    },
+    {
+        id: 14,
+        q: "A retreating glacier leaves a large ridge of debris parallel to its former flow. What does this ridge mark?",
+        a: ["A former stable terminus position (terminal moraine)"],
+        d: [
+            "The equilibrium line position",
+            "The zone of maximum flow velocity",
+            "The accumulation zone maximum"
+        ],
+        tags: ["mor"]
+    }
 ];
 
 /* --- NAVIGATION --- */
@@ -385,23 +775,54 @@ function hideAll() { Object.values(screens).forEach(s => s.classList.add('hidden
 function goHome() { 
     if(transitionTimer) clearTimeout(transitionTimer);
     gameState="MENU"; hideAll(); screens.start.classList.remove('hidden'); 
-    canvas.style.cursor = "default";
+    updateCanvasCursor();
     renderBackground(); 
 }
 
 function showLearn() {
     hideAll(); screens.learn.classList.remove('hidden');
-    const c = document.getElementById('fact-container'); c.innerHTML="";
-    triviaQuestions.forEach(t => {
+    switchArchiveTab('all'); // Start with all tab
+}
+
+function switchArchiveTab(tabName) {
+    // Update active tab
+    document.querySelectorAll('.archive-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[onclick="switchArchiveTab('${tabName}')"]`).classList.add('active');
+    
+    // Clear and fill the single container
+    const container = document.getElementById('fact-container');
+    container.innerHTML = "";
+    
+    let filteredQuestions = triviaQuestions;
+    if (tabName !== 'all') {
+        filteredQuestions = triviaQuestions.filter(q => q.tags.includes(tabName));
+    }
+    
+    // Update question count in tab
+    const tabElement = document.querySelector(`[onclick="switchArchiveTab('${tabName}')"]`);
+    if (tabElement) {
+        const existingCount = tabElement.querySelector('.question-count');
+        if (existingCount) existingCount.remove();
+        const countSpan = document.createElement('span');
+        countSpan.className = 'question-count';
+        countSpan.textContent = `(${filteredQuestions.length})`;
+        tabElement.appendChild(countSpan);
+    }
+    
+    // Add questions to container
+    filteredQuestions.forEach(t => {
         const d = document.createElement('div'); 
         d.className = 'fact-card';
         d.onclick = function() { this.classList.toggle('revealed'); };
+        
         d.innerHTML = `
-            <div class="q-label">ARCHIVE NODE ${t.id}</div>
-            <div class="fact-q">${t.q}</div>
-            <div class="fact-a-wrap"><div class="fact-a">${t.a[0]}</div></div>
+            <div class="q-label" style="color:#00f2fe; font-size:12px; margin-bottom:10px;">ARCHIVE NODE ${t.id} | ${tabName === 'all' ? t.tags[0].toUpperCase() : tabName.toUpperCase()}</div>
+            <div class="fact-q" style="font-size:18px; line-height:1.4;">${t.q}</div>
+            <div class="fact-a-wrap"><div class="fact-a" style="color:#00ffaa; font-weight:bold;">${t.a[0]}</div></div>
         `;
-        c.appendChild(d);
+        container.appendChild(d);
     });
 }
 
@@ -410,6 +831,10 @@ function openSettings(fromState) {
     if(gameState === 'PLAY') gameState = 'PAUSE'; 
     hideAll();
     screens.settings.classList.remove('hidden');
+    
+    // Update UI to reflect current settings
+    updateMouseTypeUI();
+    updateZoomPreview(gameSettings.zoomLevel);
 }
 
 function closeSettings() {
@@ -435,19 +860,90 @@ function toggleFps() {
     document.getElementById('fps-counter').style.display = gameSettings.fps ? 'block' : 'none';
 }
 
+function changeMouseType(type) {
+    gameSettings.mouseType = type;
+    updateMouseTypeUI();
+    updateCanvasCursor();
+}
+
+function updateMouseTypeUI() {
+    document.querySelectorAll('.mouse-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    document.querySelector(`[onclick="changeMouseType('${gameSettings.mouseType}')"]`).classList.add('active');
+}
+
+function updateCanvasCursor() {
+    switch(gameSettings.mouseType) {
+        case 'crosshair':
+            canvas.style.cursor = "crosshair";
+            break;
+        case 'pointer':
+            canvas.style.cursor = "pointer";
+            break;
+        case 'circle':
+            canvas.style.cursor = "none";
+            break;
+    }
+}
+
+function updateZoomPreview(value) {
+    gameSettings.zoomLevel = parseFloat(value);
+    document.getElementById('zoom-value').textContent = `${Math.round(value * 100)}%`;
+    
+    const preview = document.getElementById('zoom-preview');
+    preview.style.transform = `scale(${value})`;
+    preview.style.transformOrigin = "center center";
+}
+
+function applyZoom() {
+    // Zoom is applied through camera scaling in the render function
+    addFloat(`ZOOM: ${Math.round(gameSettings.zoomLevel * 100)}%`, player.x, player.y, "#00f2fe");
+}
+
 function startGame() { 
     if(animationFrameId) cancelAnimationFrame(animationFrameId);
     if(transitionTimer) clearTimeout(transitionTimer);
     hideAll(); screens.hud.classList.remove('hidden'); 
-    canvas.style.cursor = "crosshair";
+    updateCanvasCursor();
     
     depthIndex = 0;
     resetPlayer();
-    startDepth();
+    showZoneIntro(); // Show intro instead of directly starting
     
-    gameState="PLAY"; 
     lastTime = performance.now();
     loop(lastTime); 
+}
+
+function showZoneIntro() {
+    gameState = "INTRO";
+    screens.zoneIntro.classList.remove('hidden');
+    
+    document.getElementById('zone-title').textContent = DEPTH_NAMES[depthIndex];
+    document.getElementById('zone-description').innerHTML = ZONE_DESCRIPTIONS[depthIndex];
+    document.getElementById('zone-continue').textContent = "Press ANY KEY or CLICK to continue...";
+    
+    // Set up continue handlers
+    document.addEventListener('keydown', handleIntroContinue);
+    canvas.addEventListener('click', handleIntroContinue);
+}
+
+function handleIntroContinue(e) {
+    // Allow any key or click to continue
+    if (gameState !== "INTRO") return;
+    
+    // Prevent space from scrolling if that was the key pressed
+    if (e.type === 'keydown' && e.code === 'Space') {
+        e.preventDefault();
+    }
+    
+    // Clean up event listeners
+    document.removeEventListener('keydown', handleIntroContinue);
+    canvas.removeEventListener('click', handleIntroContinue);
+    
+    // Continue to the zone
+    screens.zoneIntro.classList.add('hidden');
+    startDepth();
 }
 
 function resetPlayer() {
@@ -492,10 +988,10 @@ function updatePauseStats() {
     let m = document.getElementById('st-mods');
     m.innerHTML = "";
     if(!player.hasShock && !player.hasMag && !player.hasShield && !player.hasMulti) m.innerHTML = "<span style='color:#666'>No Modules Installed</span>";
-    if(player.hasShock) m.innerHTML += "<div class='stat-row' style='color:#00f2fe'>SHOCKWAVE</div>";
-    if(player.hasMag) m.innerHTML += "<div class='stat-row' style='color:#fff'>GRAVITY WELL</div>";
-    if(player.hasMulti) m.innerHTML += "<div class='stat-row' style='color:#ff9900'>MULTI-SHOT</div>";
-    if(player.hasShield) m.innerHTML += "<div class='stat-row' style='color:#00ffaa'>ION SHIELD</div>";
+    if(player.hasShock) m.innerHTML += "<div class='stat-row' style='color:#00f2fe'>Shockwave</div>";
+    if(player.hasMag) m.innerHTML += "<div class='stat-row' style='color:#fff'>Gravity Well</div>";
+    if(player.hasMulti) m.innerHTML += "<div class='stat-row' style='color:#ff9900'>Multi-Shot</div>";
+    if(player.hasShield) m.innerHTML += "<div class='stat-row' style='color:#00ffaa'>Energy Shield</div>";
 }
 
 /* --- GAME LOGIC --- */
@@ -553,7 +1049,8 @@ function spawnNextWave() {
             id: Math.random(),
             x:ex, y:ey, hp:hp, maxHp:hp, sides:sides, size:20+(sides*4), spd:spd, 
             color:colors[(sides-3)%7], angle:0, spin:(Math.random()-0.5)*0.15,
-            type: 'normal'
+            type: 'normal',
+            xpValue: (sides * sides) + (depthIndex * 20) // XP based on enemy stats
         });
         visuals.push({type:'spawn', x:ex, y:ey, r:60, op:1});
     }
@@ -574,7 +1071,8 @@ function spawnNextWave() {
                     id: Math.random(),
                     x:ex, y:ey, hp: 1, maxHp:1, sides:3, size:25, spd:9, // Fast
                     color: '#ff0000', angle:0, spin:0.3,
-                    type: 'kamikaze'
+                    type: 'kamikaze',
+                    xpValue: 50 + (depthIndex * 10) // Kamikazes give more XP
                 });
                 visuals.push({type:'spawn', x:ex, y:ey, r:60, op:1});
                 addFloat("WARNING", ex, ey, "#ff0000");
@@ -610,6 +1108,8 @@ function checkLevelUp() {
 }
 
 function startTrivia() {
+    triviaAnswered = false;
+    triviaLocked = false; // Reset lock
     gameState = "TRIVIA";
     screens.trivia.classList.remove('hidden');
     document.getElementById('t-status').innerText = "";
@@ -617,7 +1117,7 @@ function startTrivia() {
     // Pick Question logic
     let tag = "";
     if(depthIndex===0) tag="accum"; else if(depthIndex===1) tag="eq"; else if(depthIndex===2) tag="crev";
-    else if(depthIndex===3) tag="cirque"; else if(depthIndex===4) tag="abl"; else if(depthIndex===5) tag="mor";
+    else if(depthIndex===3) tag="land"; else if(depthIndex===4) tag="abl"; else if(depthIndex===5) tag="mor";
     
     // Filter available questions not asked yet
     let pool = triviaQuestions.filter(q => !askedQuestions.includes(q.id) && (q.tags.includes("general") || q.tags.includes(tag)));
@@ -629,32 +1129,53 @@ function startTrivia() {
     let q = pool[Math.floor(Math.random()*pool.length)];
     askedQuestions.push(q.id);
 
-    document.getElementById('t-ques').innerText = q.q;
+    // Format question with line breaks for readability
+    let formattedQ = q.q;
+    // Add line breaks after commas or periods when question is long
+    if (q.q.length > 80) {
+        formattedQ = q.q.replace(/([,.])\s+(?=\w)/g, '$1<br>');
+    }
+    
+    document.getElementById('t-ques').innerHTML = formattedQ;
 
     // Answers
     let correct = q.a[0];
-    let dummies = ["Ice Shelf", "Sublimation", "Crevasse", "Moraine", "Gravity", "Firn", "10%", "90%", "Horn", "Erosion", "Deposition"];
-    let opts = [correct];
-    while(opts.length < 4) {
-        let d = dummies[Math.floor(Math.random()*dummies.length)];
-        if(!opts.includes(d) && d !== correct) opts.push(d);
-    }
-    opts.sort(()=>Math.random()-0.5);
+    let opts = [correct, ...q.d];
+    opts.sort(() => Math.random() - 0.5);
 
-    const box = document.getElementById('t-opts'); box.innerHTML = "";
+    const box = document.getElementById('t-opts'); 
+    box.innerHTML = "";
+    
     opts.forEach(o => {
         let btn = document.createElement('button');
         btn.className = "t-btn";
-        btn.innerText = o;
-        btn.onclick = () => checkAnswer(o === correct);
+        btn.innerHTML = o;
+        btn.onclick = () => {
+            if (!triviaLocked) {
+                triviaLocked = true; // Lock answers
+                checkAnswer(o === correct, btn);
+            }
+        };
         box.appendChild(btn);
     });
 }
 
-function checkAnswer(isCorrect) {
+function checkAnswer(isCorrect, clickedBtn) {
+    triviaAnswered = true;
+    
+    // Disable all answer buttons
+    document.querySelectorAll('.t-btn').forEach(btn => {
+        btn.classList.add('disabled');
+        btn.style.pointerEvents = 'none';
+    });
+    
     if(isCorrect) {
         document.getElementById('t-status').innerText = "CORRECT";
         document.getElementById('t-status').style.color = "#00ffaa";
+        clickedBtn.style.backgroundColor = "#00ffaa";
+        clickedBtn.style.color = "#000";
+        clickedBtn.style.borderColor = "#00ffaa";
+        
         setTimeout(() => {
             screens.trivia.classList.add('hidden');
             
@@ -670,10 +1191,14 @@ function checkAnswer(isCorrect) {
             if(player.lvl % 4 === 0 && unacquired.length > 0) triggerUnlock(unacquired);
             else triggerUpgrade();
             
-        }, 500);
+        }, 800);
     } else {
         document.getElementById('t-status').innerText = "INCORRECT";
         document.getElementById('t-status').style.color = "#ff2a6d";
+        clickedBtn.style.backgroundColor = "#ff2a6d";
+        clickedBtn.style.color = "#000";
+        clickedBtn.style.borderColor = "#ff2a6d";
+        
         shake(10);
         setTimeout(() => {
             screens.trivia.classList.add('hidden');
@@ -690,7 +1215,7 @@ function triggerUnlock(availableAbs) {
     const con = document.getElementById('up-container'); con.innerHTML="";
     availableAbs.forEach(a => {
         const div = document.createElement('div'); div.className='upgrade-btn unlock-btn';
-        div.innerHTML=`<div class="u-tag">ABILITY</div><div class="u-title">${a.name}</div><div class="u-desc">${a.desc}</div>`;
+        div.innerHTML=`<div class="u-tag">NEW ABILITY</div><div class="u-title">${a.name}</div><div class="u-desc">${a.desc}</div>`;
         div.onclick = () => {
             if(a.id==='shock') player.hasShock=true;
             if(a.id==='mag') player.hasMag=true;
@@ -708,12 +1233,12 @@ function triggerUpgrade() {
     document.getElementById('up-header').style.color = "#fff";
     const con = document.getElementById('up-container'); con.innerHTML="";
     
-    // 1. Force Nanobots
-    const nanobots = upgradesDB.find(u => u.n === "Nanobots");
+    // 1. Force More Health upgrade
+    const healthUpgrade = upgradesDB.find(u => u.n === "More Health");
 
     // 2. Get pool of others
     let pool = upgradesDB.filter(u => {
-        if(u.n === "Nanobots") return false; 
+        if(u.n === "More Health") return false; 
         if(u.req === 'shock' && !player.hasShock) return false;
         if(u.req === 'mag' && !player.hasMag) return false;
         if(u.req === 'multi' && !player.hasMulti) return false;
@@ -721,16 +1246,16 @@ function triggerUpgrade() {
         return true;
     });
 
-    // 3. Select 3 randoms + Nanobots
+    // 3. Select 3 randoms + Health upgrade
     let selected = pool.sort(()=>Math.random()-0.5).slice(0,3);
-    selected.push(nanobots);
+    selected.push(healthUpgrade);
     
     // 4. Shuffle again for display
     selected.sort(()=>Math.random()-0.5);
 
     selected.forEach(u => {
         const div = document.createElement('div'); div.className='upgrade-btn';
-        div.innerHTML=`<div class="u-tag">PASSIVE</div><div class="u-title">${u.n}</div><div class="u-desc">${u.d}</div>`;
+        div.innerHTML=`<div class="u-tag">UPGRADE</div><div class="u-title">${u.n}</div><div class="u-desc">${u.d}</div>`;
         div.onclick = () => { u.apply(player); finishLevelUp(u); };
         con.appendChild(div);
     });
@@ -812,12 +1337,34 @@ function loop(timestamp) {
     // DEV TOOL HOOK: UPDATE LOOP
     if(window.devUpdate) window.devUpdate();
     
-    if(gameState === "MENU" || gameState === "WIN") { renderBackground(); return; }
+    if(gameState === "MENU" || gameState === "WIN" || gameState === "INTRO") { 
+        renderBackground(); 
+        if (gameSettings.mouseType === 'circle' && (gameState === "INTRO" || gameState === "MENU")) {
+            drawCustomCursor();
+        }
+        return; 
+    }
     if(gameState !== "PLAY") return; // PAUSE EVERYTHING ELSE
     
     update(dt);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.save(); applyCamera(); drawRoom(); ctx.restore();
+    
+    // Draw custom cursor if needed
+    if (gameSettings.mouseType === 'circle') {
+        drawCustomCursor();
+    }
+}
+
+function drawCustomCursor() {
+    ctx.save();
+    ctx.translate(mouse.x, mouse.y);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
 }
 
 function applyCamera() {
@@ -827,6 +1374,12 @@ function applyCamera() {
     if(screenShake>0) screenShake*=0.9;
     camera.x += (targetX - camera.x)*0.1;
     camera.y += (targetY - camera.y)*0.1;
+    
+    // Apply zoom scaling
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.scale(gameSettings.zoomLevel, gameSettings.zoomLevel);
+    ctx.translate(-canvas.width/2, -canvas.height/2);
+    
     ctx.translate(-camera.x+sx, -camera.y+sy);
 }
 
@@ -854,7 +1407,7 @@ function update(dt) {
                 hideAll();
                 screens.win.classList.remove('hidden');
             } else {
-                startDepth();
+                showZoneIntro(); // Show intro for next zone
             }
             return;
         }
@@ -1067,15 +1620,20 @@ function update(dt) {
 function killEnemy(e, index) {
     enemies.splice(index,1); shake(5); 
     
-    let xpVal = (e.sides * e.sides) + (depthIndex * 20);
+    // Calculate XP value based on enemy stats
+    let xpVal = e.xpValue || ((e.sides * e.sides) + (depthIndex * 20));
+    
+    // Create XP orbs - ALL BLUE, same size
     for(let i=0;i<3;i++) {
         xpOrbs.push({ 
             x:e.x, y:e.y, 
             vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, 
-            v: xpVal / 3,
-            color: e.color // Inherit enemy color for distinct types
+            v: xpVal / 3, // Split XP evenly across orbs
+            color: "#00f2fe" // Always blue
         });
     }
+    
+    // Death particles in enemy color
     for(let k=0; k<6; k++) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:30, c:e.color, s:5});
 }
 
@@ -1172,15 +1730,13 @@ function drawRoom() {
     const useBloom = gameSettings.bloom; 
     if(useBloom) ctx.globalCompositeOperation = 'lighter';
     
-    // Draw XP Orbs
+    // Draw XP Orbs - ALL BLUE, SAME SIZE (6px)
     xpOrbs.forEach(x=>{ 
         if(!isOnScreen(x)) return;
-        if(useBloom) { ctx.shadowBlur=10; ctx.shadowColor= x.color || "#00f2fe"; }
-        ctx.fillStyle= x.color || "#00f2fe"; 
+        if(useBloom) { ctx.shadowBlur=10; ctx.shadowColor= "#00f2fe"; }
+        ctx.fillStyle= "#00f2fe"; 
         ctx.beginPath(); 
-        let r = 3 + (x.v / 5); 
-        if(r > 8) r = 8;
-        ctx.arc(x.x,x.y, r, 0,Math.PI*2); 
+        ctx.arc(x.x,x.y, 6, 0,Math.PI*2); 
         ctx.fill(); 
         if(useBloom) ctx.shadowBlur=0; 
     });
@@ -1231,9 +1787,25 @@ function drawRoom() {
 }
 
 window.addEventListener('resize', ()=>{ canvas.width=window.innerWidth; canvas.height=window.innerHeight; if(gameState==="MENU") renderBackground(); });
+
+// FIX FOR CHROMEBOOK INPUT ISSUE
+window.addEventListener('focus', () => {
+    // Reset all keys to false when window regains focus
+    keys = { w:false, a:false, s:false, d:false, space:false, q:false, e:false };
+});
+
 window.addEventListener('keydown', e=>{ 
-    if(e.key==='w') keys.w=true; if(e.key==='a') keys.a=true; if(e.key==='s') keys.s=true; if(e.key==='d') keys.d=true; 
-    if(e.key===' ') { keys.space=true; e.preventDefault(); } if(e.key==='q') keys.q=true; if(e.key==='e') keys.e=true;
+    // Prevent default for space to avoid scrolling
+    if(e.code === 'Space') e.preventDefault();
+    
+    if(e.key==='w' || e.key==='W') keys.w=true; 
+    if(e.key==='a' || e.key==='A') keys.a=true; 
+    if(e.key==='s' || e.key==='S') keys.s=true; 
+    if(e.key==='d' || e.key==='D') keys.d=true; 
+    if(e.key===' ') { keys.space=true; } 
+    if(e.key==='q' || e.key==='Q') keys.q=true; 
+    if(e.key==='e' || e.key==='E') keys.e=true;
+    
     if(e.key==='Escape') { 
         if(!screens.settings.classList.contains('hidden')) closeSettings();
         else if(!screens.learn.classList.contains('hidden')) goHome();
@@ -1245,13 +1817,26 @@ window.addEventListener('keydown', e=>{
         console.style.display = (console.style.display === 'block') ? 'none' : 'block';
     }
 });
+
 window.addEventListener('keyup', e=>{ 
-    if(e.key==='w') keys.w=false; if(e.key==='a') keys.a=false; if(e.key==='s') keys.s=false; if(e.key==='d') keys.d=false; 
-    if(e.key===' ') keys.space=false; if(e.key==='q') keys.q=false; if(e.key==='e') keys.e=false;
+    if(e.key==='w' || e.key==='W') keys.w=false; 
+    if(e.key==='a' || e.key==='A') keys.a=false; 
+    if(e.key==='s' || e.key==='S') keys.s=false; 
+    if(e.key==='d' || e.key==='D') keys.d=false; 
+    if(e.key===' ') keys.space=false; 
+    if(e.key==='q' || e.key==='Q') keys.q=false; 
+    if(e.key==='e' || e.key==='E') keys.e=false;
 });
+
 window.addEventListener('mousemove', e=>{ 
-    const rect = canvas.getBoundingClientRect(); mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top; 
+    const rect = canvas.getBoundingClientRect(); 
+    mouse.x = e.clientX - rect.left; 
+    mouse.y = e.clientY - rect.top; 
 });
+
+// MOUSE DOWN/UP FOR CLICK-TO-CONTINUE
+window.addEventListener('mousedown', e=>{ mouse.down = true; });
+window.addEventListener('mouseup', e=>{ mouse.down = false; });
 
 /* --- DEV CONSOLE SCRIPTS --- */
 function updatePlayerStat(stat, val) {
@@ -1263,7 +1848,12 @@ function devSkipWave() {
     if(gameState !== "PLAY" || portal.active) return; // Prevent skipping past 10
     // KILL ALL ENEMIES TO TRIGGER NATURAL END (WHICH HANDLES PORTAL)
     enemies.forEach(e => {
-        for(let i=0;i<3;i++) xpOrbs.push({ x:e.x, y:e.y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, v:(e.sides*5)/3 });
+        for(let i=0;i<3;i++) xpOrbs.push({ 
+            x:e.x, y:e.y, 
+            vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, 
+            v:(e.xpValue || (e.sides*5))/3,
+            color: "#00f2fe"
+        });
     });
     enemies = [];
     addFloat("WAVE WIPED", player.x, player.y, "#ff9900");
@@ -1275,7 +1865,7 @@ function devNextZone() {
     enemies = [];
     depthIndex++;
     if(depthIndex >= DEPTH_NAMES.length) depthIndex = 0;
-    startDepth();
+    showZoneIntro();
 }
 
 function devUnlockAll() {
@@ -1337,3 +1927,5 @@ canvas.width=window.innerWidth; canvas.height=window.innerHeight; renderBackgrou
 </script>
 </body>
 </html>
+
+
