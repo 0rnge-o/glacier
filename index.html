@@ -1325,17 +1325,18 @@ function shake(amt) { screenShake=amt; }
 function addFloat(t,x,y,c) { if(floatTexts.length>20)floatTexts.shift(); floatTexts.push({t,x,y,c,l:60}); }
 function getDistSq(x1, y1, x2, y2) { return (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2); }
 
+let viewBounds = null; // Set each frame in drawRoom; avoids repeated camera/canvas reads
 function isOnScreen(obj) {
-    const buffer = 100;
-    return (obj.x > camera.x - buffer && 
-            obj.x < camera.x + canvas.width + buffer &&
-            obj.y > camera.y - buffer && 
-            obj.y < camera.y + canvas.height + buffer);
+    if (!viewBounds) return true;
+    return (obj.x >= viewBounds.left && obj.x <= viewBounds.right &&
+            obj.y >= viewBounds.top && obj.y <= viewBounds.bottom);
 }
 
 /* --- MAIN LOOP --- */
 function loop(timestamp) {
-    animationFrameId = requestAnimationFrame(loop);
+    const isIdle = (gameState === "MENU" || gameState === "WIN" || gameState === "INTRO");
+    if (!isIdle) animationFrameId = requestAnimationFrame(loop);
+    else animationFrameId = setTimeout(() => requestAnimationFrame(loop), 100);
     
     // FPS Calculation
     if(!lastTime) lastTime = timestamp;
@@ -1381,7 +1382,7 @@ function drawCustomCursor() {
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.arc(0, 0, 10, 0, TAU);
     ctx.stroke();
     ctx.restore();
 }
@@ -1434,10 +1435,11 @@ function update(dt) {
         if(keys.space && player.shockTimer >= player.shockMax) {
             player.shockTimer = 0; shake(30);
             visuals.push({type:'shock', x:player.x, y:player.y, r:0, maxR:player.shockRad, op:1});
-            let rSq = player.shockRad * player.shockRad;
-            // Iterate backwards for safe removal
+            const shockRad = player.shockRad;
+            const rSq = shockRad * shockRad;
             for(let i=enemies.length-1; i>=0; i--) {
                 let e = enemies[i];
+                if (Math.abs(e.x - player.x) > shockRad || Math.abs(e.y - player.y) > shockRad) continue;
                 if(getDistSq(e.x, e.y, player.x, player.y) < rSq) {
                     e.hp -= player.blastDmg;
                     addFloat(Math.floor(player.blastDmg), e.x, e.y, "#00f2fe"); 
@@ -1513,24 +1515,29 @@ function update(dt) {
         player.cd=player.fr;
     }
 
-    // Bullets
+    // Bullets (collect indices to remove, splice once after loop)
+    const bulletsToRemove = [];
     bullets.forEach((b,i)=>{
         b.x += b.vx * dt; 
         b.y += b.vy * dt;
-        if(b.x<0||b.x>ROOM_WIDTH||b.y<0||b.y>ROOM_HEIGHT) { bullets.splice(i,1); return; }
+        if(b.x<0||b.x>ROOM_WIDTH||b.y<0||b.y>ROOM_HEIGHT) { bulletsToRemove.push(i); return; }
         for(let j=enemies.length-1; j>=0; j--){
             let e = enemies[j];
-            if(getDistSq(e.x, e.y, b.x, b.y) < (e.size+15)**2) {
+            const hitRad = e.size + 15;
+            if (Math.abs(e.x - b.x) > hitRad || Math.abs(e.y - b.y) > hitRad) continue;
+            if(getDistSq(e.x, e.y, b.x, b.y) < hitRad * hitRad) {
                 if(b.pierce && b.hitList.includes(e.id)) continue;
                 e.hp-=player.dmg; 
                 addFloat(Math.floor(player.dmg), e.x, e.y, b.pierce?"#00f2fe":"#fff");
                 particles.push({x:b.x, y:b.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:10, c:'#fff'});
-                if(b.pierce) b.hitList.push(e.id); else { bullets.splice(i,1); }
+                if(b.pierce) b.hitList.push(e.id); else bulletsToRemove.push(i);
                 if(e.hp<=0) { killEnemy(e, j); checkWaveClear(); }
                 if(!b.pierce) break; 
             }
         }
     });
+    bulletsToRemove.sort((a,b)=>b-a);
+    for(let idx of bulletsToRemove) bullets.splice(idx, 1);
 
     // Enemies
     enemies.forEach((e, index)=>{
@@ -1601,8 +1608,9 @@ function update(dt) {
         }
     });
 
-    // XP
+    // XP (collect indices to remove, splice once after loop)
     if(xpOrbs.length > MAX_XP) xpOrbs.shift(); // Hard Cap
+    const xpToRemove = [];
     xpOrbs.forEach((x,i)=>{
         let dSq = getDistSq(player.x, player.y, x.x, x.y);
         let pull = (player.hasMag && player.magActive>0);
@@ -1610,34 +1618,45 @@ function update(dt) {
         let ang = Math.atan2(player.y - x.y, player.x - x.x);
 
         if(pull) {
-            // Magnet: Slightly Slower pull (Nerfed to 1.5)
             x.vx += Math.cos(ang) * 1.5 * dt; 
             x.vy += Math.sin(ang) * 1.5 * dt;
             x.vx *= 0.92; x.vy *= 0.92;
             x.x += x.vx * dt; x.y += x.vy * dt;
         } else if (dSq < 60000) { 
-            // Passive Pickup: Stronger acceleration when close
             let speed = 2.5 * dt; 
             x.x += Math.cos(ang) * speed * 5; 
             x.y += Math.sin(ang) * speed * 5;
         }
 
         if(dSq<900) { 
-            player.xp+=x.v; xpOrbs.splice(i,1);
+            player.xp+=x.v; xpToRemove.push(i);
             if(gameState !== "DEAD") { checkLevelUp(); updateHUD(); }
         }
     });
+    xpToRemove.sort((a,b)=>b-a);
+    for(let idx of xpToRemove) xpOrbs.splice(idx, 1);
 
-    // Cleanup
+    // Cleanup (collect indices to remove, splice once after each loop)
     if(particles.length > MAX_PARTICLES) particles.shift(); // Hard Cap
-    particles.forEach((p,i)=>{ p.x+=p.vx * dt; p.y+=p.vy * dt; p.l -= dt; if(p.l<=0) particles.splice(i,1); });
-    floatTexts.forEach((t,i)=>{ t.y -= 1 * dt; t.l -= dt; if(t.l<=0) floatTexts.splice(i,1); });
+    const particlesToRemove = [];
+    particles.forEach((p,i)=>{ p.x+=p.vx * dt; p.y+=p.vy * dt; p.l -= dt; if(p.l<=0) particlesToRemove.push(i); });
+    particlesToRemove.sort((a,b)=>b-a);
+    for(let idx of particlesToRemove) particles.splice(idx, 1);
+
+    const floatTextsToRemove = [];
+    floatTexts.forEach((t,i)=>{ t.y -= 1 * dt; t.l -= dt; if(t.l<=0) floatTextsToRemove.push(i); });
+    floatTextsToRemove.sort((a,b)=>b-a);
+    for(let idx of floatTextsToRemove) floatTexts.splice(idx, 1);
+
+    const visualsToRemove = [];
     visuals.forEach((v,i)=>{
         if(v.type==='shock') { v.r+=20 * dt; v.op-=0.04 * dt; }
         else if(v.type==='shieldBreak') { v.r+=4 * dt; v.op-=0.05 * dt; }
         else if(v.type==='spawn') { v.r-=2 * dt; v.op-=0.05 * dt; }
-        if(v.op<=0 || v.r<0) visuals.splice(i,1);
+        if(v.op<=0 || v.r<0) visualsToRemove.push(i);
     });
+    visualsToRemove.sort((a,b)=>b-a);
+    for(let idx of visualsToRemove) visuals.splice(idx, 1);
 }
 
 function killEnemy(e, index) {
@@ -1665,7 +1684,17 @@ function renderBackground() {
     ctx.fillStyle="#020205"; ctx.fillRect(0,0,canvas.width,canvas.height);
 }
 
+const TAU = Math.PI * 2; // Reuse for arcs
+
 function drawRoom() {
+    const buffer = 100;
+    viewBounds = {
+        left: camera.x - buffer,
+        right: camera.x + canvas.width + buffer,
+        top: camera.y - buffer,
+        bottom: camera.y + canvas.height + buffer
+    };
+
     const palettes = [
         { bg: "#0a0a10", grid: "rgba(0, 242, 254, 0.05)", wall: "#00f2fe" },
         { bg: "#100a0a", grid: "rgba(255, 42, 109, 0.05)", wall: "#ff2a6d" },
@@ -1676,13 +1705,19 @@ function drawRoom() {
     ];
     const pal = palettes[depthIndex % palettes.length];
 
-    ctx.fillStyle = "#020205"; ctx.fillRect(camera.x-100, camera.y-100, canvas.width+200, canvas.height+200);
+    ctx.fillStyle = "#020205"; ctx.fillRect(viewBounds.left, viewBounds.top, viewBounds.right - viewBounds.left, viewBounds.bottom - viewBounds.top);
     ctx.fillStyle = pal.bg; ctx.fillRect(0,0,ROOM_WIDTH, ROOM_HEIGHT);
 
+    // Only draw grid lines that intersect the visible view
     ctx.strokeStyle=pal.grid; ctx.lineWidth=2;
     ctx.beginPath();
-    for(let x=0; x<=ROOM_WIDTH; x+=100) { ctx.moveTo(x, 0); ctx.lineTo(x, ROOM_HEIGHT); }
-    for(let y=0; y<=ROOM_HEIGHT; y+=100) { ctx.moveTo(0, y); ctx.lineTo(ROOM_WIDTH, y); }
+    const gridStep = 100;
+    const xStart = Math.floor(viewBounds.left / gridStep) * gridStep;
+    const xEnd = Math.min(ROOM_WIDTH, Math.ceil(viewBounds.right / gridStep) * gridStep);
+    const yStart = Math.floor(viewBounds.top / gridStep) * gridStep;
+    const yEnd = Math.min(ROOM_HEIGHT, Math.ceil(viewBounds.bottom / gridStep) * gridStep);
+    for (let x = xStart; x <= xEnd; x += gridStep) { ctx.moveTo(x, 0); ctx.lineTo(x, ROOM_HEIGHT); }
+    for (let y = yStart; y <= yEnd; y += gridStep) { ctx.moveTo(0, y); ctx.lineTo(ROOM_WIDTH, y); }
     ctx.stroke();
 
     ctx.strokeStyle = pal.wall; ctx.lineWidth = 10;
@@ -1716,7 +1751,7 @@ function drawRoom() {
         ctx.strokeStyle = "#00ffaa"; ctx.lineWidth = 5; ctx.shadowBlur = 20; ctx.shadowColor = "#00ffaa";
         ctx.beginPath();
         for(let i=0; i<8; i++) {
-            let th = (i/8)*Math.PI*2;
+            let th = (i/8)*TAU;
             ctx[i===0?'moveTo':'lineTo'](Math.cos(th)*portal.r, Math.sin(th)*portal.r);
         }
         ctx.closePath(); ctx.stroke();
@@ -1759,14 +1794,14 @@ function drawRoom() {
         if(useBloom) { ctx.shadowBlur=10; ctx.shadowColor= "#00f2fe"; }
         ctx.fillStyle= "#00f2fe"; 
         ctx.beginPath(); 
-        ctx.arc(x.x,x.y, 6, 0,Math.PI*2); 
+        ctx.arc(x.x,x.y, 6, 0,TAU); 
         ctx.fill(); 
         if(useBloom) ctx.shadowBlur=0; 
     });
     
     particles.forEach(p=>{ 
         if(!isOnScreen(p)) return;
-        ctx.fillStyle=p.c; ctx.globalAlpha=p.l/30; ctx.beginPath(); ctx.arc(p.x,p.y,p.s||3,0,Math.PI*2); ctx.fill(); 
+        ctx.fillStyle=p.c; ctx.globalAlpha=p.l/30; ctx.beginPath(); ctx.arc(p.x,p.y,p.s||3,0,TAU); ctx.fill(); 
     });
     ctx.globalAlpha=1;
     
@@ -1775,7 +1810,7 @@ function drawRoom() {
         if(!isOnScreen(b)) return;
         ctx.fillStyle = b.pierce ? "#fff" : "#00f2fe"; 
         if(useBloom) ctx.shadowColor = ctx.fillStyle;
-        ctx.beginPath(); ctx.arc(b.x,b.y,4,0,Math.PI*2); ctx.fill(); 
+        ctx.beginPath(); ctx.arc(b.x,b.y,4,0,TAU); ctx.fill(); 
     });
     ctx.shadowBlur=0;
 
