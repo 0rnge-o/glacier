@@ -8,8 +8,8 @@
 
         body { margin: 0; overflow: hidden; background: #020205; font-family: 'Montserrat', sans-serif; user-select: none; }
         
-        #game-container { position: relative; width: 100vw; height: 100vh; }
-        canvas { display: block; }
+        #game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
 
         /* OVERLAYS */
         .overlay {
@@ -43,6 +43,8 @@
         .wave-info { font-size: 18px; color: #ff9900; font-weight: 700; margin-top:5px; }
 
         #fps-counter { position: absolute; top: 20px; right: 20px; color: #00ffaa; font-weight: bold; font-family: monospace; z-index: 5; display: none; }
+
+        #version-badge { position: absolute; bottom: 20px; left: 20px; color: #666; font-size: 14px; font-weight: 400; z-index: 11; pointer-events: none; }
 
         /* SKILLS */
         #skills-row { display: flex; gap: 15px; margin-top: 20px; pointer-events: auto; }
@@ -245,9 +247,11 @@
             border-radius: 10px;
             outline: none;
             -webkit-appearance: none;
+            appearance: none;
         }
         .zoom-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
+            appearance: none;
             width: 25px;
             height: 25px;
             border-radius: 50%;
@@ -310,6 +314,7 @@
         .mouse-preview.crosshair { color: #fff; }
         .mouse-preview.pointer { color: #00f2fe; }
         .mouse-preview.circle { color: #fff; }
+
     </style>
 </head>
 <body>
@@ -372,13 +377,16 @@
         <button class="menu-btn" onclick="startGame()">INITIATE</button>
         <button class="menu-btn" onclick="openSettings('MENU')">SETTINGS</button>
         <button class="menu-btn" onclick="showLearn()">ARCHIVE</button>
+        <div id="version-badge">v1.8</div>
     </div>
 
     <div id="settings-screen" class="overlay hidden">
         <h1>SETTINGS</h1>
         <div id="settings-content">
+            <!-- GRAPHICS QUALITY -->
+            <h3 style="color:#00f2fe; margin-top: 0; width: 100%; text-align: center;">GRAPHICS QUALITY</h3>
             <button class="menu-btn" id="btn-bloom" onclick="toggleBloom()" style="margin:0; width:100%">
-                GRAPHICS: LOW
+                EFFECTS: LOW
             </button>
             <button class="menu-btn" id="btn-fps" onclick="toggleFps()" style="margin:0; width:100%">FPS: OFF</button>
             
@@ -564,6 +572,7 @@ let screenShake = 0;
 // GAME VARIABLES
 let depthIndex = 0; 
 let wave = 0; 
+let waveSpawnScheduled = false; // Prevents spam-skip from queuing multiple spawns
 let player = {};
 let bullets=[], enemies=[], particles=[], xpOrbs=[], floatTexts=[], visuals=[];
 let portal = { active: false, x: 0, y: 0, r: 80, angle: 0 };
@@ -576,8 +585,11 @@ let introKeysHeldWhenShown = {}; // Keys that were held when zone intro appeared
 
 // TIME & FPS
 let lastTime = 0;
+let gameTime = 0; // ms, for enemy contact cooldown
 let fpsTimer = 0;
 let frames = 0;
+let aimMode = 'mouse'; // 'mouse' or 'keys'; switch only when user uses that input
+let aimModeLockUntil = 0; // After overlay close, ignore mousemove for a moment so arrow-key aim isn't overridden
 
 /* --- DATA --- */
 const abilitiesDB = [
@@ -826,7 +838,8 @@ function openSettings(fromState) {
     
     // Update UI to reflect current settings
     updateMouseTypeUI();
-    updateZoomPreview(gameSettings.zoomLevel);
+    if (typeof updateZoomPreview === 'function') updateZoomPreview(gameSettings.zoomLevel);
+    document.getElementById('btn-bloom').innerText = gameSettings.bloom ? "EFFECTS: HIGH" : "EFFECTS: LOW";
 }
 
 function closeSettings() {
@@ -841,9 +854,15 @@ function closeSettings() {
     }
 }
 
+function applyCanvasResolution() {
+    canvas.width = 1920;
+    canvas.height = 1080;
+    if (gameState === "MENU") renderBackground();
+}
+
 function toggleBloom() {
     gameSettings.bloom = !gameSettings.bloom;
-    document.getElementById('btn-bloom').innerText = gameSettings.bloom ? "GRAPHICS: HIGH" : "GRAPHICS: LOW";
+    document.getElementById('btn-bloom').innerText = gameSettings.bloom ? "EFFECTS: HIGH" : "EFFECTS: LOW";
 }
 
 function toggleFps() {
@@ -886,6 +905,8 @@ function startGame() {
     updateCanvasCursor();
     
     depthIndex = 0;
+    gameTime = 0;
+    aimMode = 'mouse';
     nextLevelIsModule = false;
     resetPlayer();
     showZoneIntro(); // Show intro instead of directly starting
@@ -1008,9 +1029,11 @@ function startDepth() {
 }
 
 function spawnNextWave() {
-    // GUARD CLAUSE: Don't spawn if portal is active (prevents wave > 10)
+    // GUARD CLAUSE: Don't spawn if portal is active or already at max wave
     if(portal.active) return;
+    if(wave >= WAVES_PER_DEPTH) return;
     
+    waveSpawnScheduled = false;
     wave++;
     document.getElementById('wave-tag').innerText = `WAVE ${wave}/${WAVES_PER_DEPTH}`;
     addFloat(`WAVE ${wave}`, player.x, player.y - 150, "#ff9900");
@@ -1083,7 +1106,8 @@ function checkWaveClear() {
                 portal.y = ROOM_HEIGHT / 2;
                 addFloat("PORTAL OPEN", portal.x, portal.y - 120, "#00ffaa");
             }
-        } else {
+        } else if(!waveSpawnScheduled) {
+            waveSpawnScheduled = true;
             setTimeout(spawnNextWave, 1000); 
         }
     }
@@ -1221,6 +1245,7 @@ function checkAnswer(isCorrect, clickedBtn) {
 
         setTimeout(() => {
             screens.trivia.classList.add('hidden');
+            aimModeLockUntil = Date.now() + 250; // Preserve arrow-key aim when exiting trivia
             gameState = "PLAY";
             lastTime = performance.now(); // Reset time to avoid physics jump
         }, 1500);
@@ -1282,6 +1307,7 @@ function triggerUpgrade() {
 
 function finishLevelUp(upObj) { 
     if(upObj) player.upgradeHistory.push(upObj); 
+    aimModeLockUntil = Date.now() + 250; // Preserve arrow-key aim when exiting upgrade
     updateHUD(); updateSkillUI(); screens.upgrade.classList.add('hidden'); gameState="PLAY"; 
     lastTime = performance.now(); // Reset time
     // Sync Dev Console
@@ -1478,14 +1504,17 @@ function update(dt) {
     }
     updateSkillUI();
 
-    // Aim: arrow keys override mouse when any arrow is held
-    let angle = Math.atan2(mouse.wy-player.y, mouse.wx-player.x);
-    if(keys.arrowUp || keys.arrowDown || keys.arrowLeft || keys.arrowRight) {
+    // Aim: toggle between mouse and arrow keys; don't snap to mouse until mouse is moved
+    const arrowHeld = keys.arrowUp || keys.arrowDown || keys.arrowLeft || keys.arrowRight;
+    if (arrowHeld) {
+        aimMode = 'keys';
         const dy = (keys.arrowDown ? 1 : 0) - (keys.arrowUp ? 1 : 0);
         const dx = (keys.arrowRight ? 1 : 0) - (keys.arrowLeft ? 1 : 0);
-        if(dx !== 0 || dy !== 0) angle = Math.atan2(dy, dx);
+        if (dx !== 0 || dy !== 0) player.aimAngle = Math.atan2(dy, dx);
+    } else if (aimMode === 'mouse') {
+        player.aimAngle = Math.atan2(mouse.wy - player.y, mouse.wx - player.x);
     }
-    player.aimAngle = angle;
+    // else aimMode === 'keys' and no arrow held: keep current player.aimAngle
 
     // Shooting
     if(player.cd>0) player.cd -= dt;
@@ -1503,11 +1532,11 @@ function update(dt) {
         if(player.multiActive > 0) {
             let spread = 0.2; // roughly 12 degrees
             bullets.push({
-                x:player.x, y:player.y, vx:Math.cos(angle+spread)*player.bulletSpd, vy:Math.sin(angle+spread)*player.bulletSpd,
+                x:player.x, y:player.y, vx:Math.cos(player.aimAngle+spread)*player.bulletSpd, vy:Math.sin(player.aimAngle+spread)*player.bulletSpd,
                 pierce: isPierce, hitList: [] 
             });
             bullets.push({
-                x:player.x, y:player.y, vx:Math.cos(angle-spread)*player.bulletSpd, vy:Math.sin(angle-spread)*player.bulletSpd,
+                x:player.x, y:player.y, vx:Math.cos(player.aimAngle-spread)*player.bulletSpd, vy:Math.sin(player.aimAngle-spread)*player.bulletSpd,
                 pierce: isPierce, hitList: [] 
             });
         }
@@ -1599,7 +1628,12 @@ function update(dt) {
                     document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
                 }
             } else {
-                player.hp-=1; updateHUD();
+                // Non-kamikaze: nerfed to 1 damage per 0.5s contact (not per frame)
+                if (!e.lastHitPlayerAt || gameTime - e.lastHitPlayerAt > 500) {
+                    e.lastHitPlayerAt = gameTime;
+                    player.hp -= 1;
+                    updateHUD();
+                }
                 if(player.hp<=0) { 
                     gameState="DEAD"; hideAll(); screens.death.classList.remove('hidden'); 
                     document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
@@ -1708,13 +1742,13 @@ function drawRoom() {
     ctx.fillStyle = "#020205"; ctx.fillRect(viewBounds.left, viewBounds.top, viewBounds.right - viewBounds.left, viewBounds.bottom - viewBounds.top);
     ctx.fillStyle = pal.bg; ctx.fillRect(0,0,ROOM_WIDTH, ROOM_HEIGHT);
 
-    // Only draw grid lines that intersect the visible view
+    // Only draw grid lines that intersect the visible view (clamp to room bounds)
     ctx.strokeStyle=pal.grid; ctx.lineWidth=2;
     ctx.beginPath();
     const gridStep = 100;
-    const xStart = Math.floor(viewBounds.left / gridStep) * gridStep;
+    const xStart = Math.max(0, Math.floor(viewBounds.left / gridStep) * gridStep);
     const xEnd = Math.min(ROOM_WIDTH, Math.ceil(viewBounds.right / gridStep) * gridStep);
-    const yStart = Math.floor(viewBounds.top / gridStep) * gridStep;
+    const yStart = Math.max(0, Math.floor(viewBounds.top / gridStep) * gridStep);
     const yEnd = Math.min(ROOM_HEIGHT, Math.ceil(viewBounds.bottom / gridStep) * gridStep);
     for (let x = xStart; x <= xEnd; x += gridStep) { ctx.moveTo(x, 0); ctx.lineTo(x, ROOM_HEIGHT); }
     for (let y = yStart; y <= yEnd; y += gridStep) { ctx.moveTo(0, y); ctx.lineTo(ROOM_WIDTH, y); }
@@ -1845,7 +1879,7 @@ function drawRoom() {
     ctx.globalAlpha=1;
 }
 
-window.addEventListener('resize', ()=>{ canvas.width=window.innerWidth; canvas.height=window.innerHeight; if(gameState==="MENU") renderBackground(); });
+window.addEventListener('resize', ()=>{ applyCanvasResolution(); });
 
 // FIX FOR CHROMEBOOK INPUT ISSUE
 window.addEventListener('focus', () => {
@@ -1896,9 +1930,13 @@ window.addEventListener('keyup', e=>{
 });
 
 window.addEventListener('mousemove', e=>{ 
-    const rect = canvas.getBoundingClientRect(); 
-    mouse.x = e.clientX - rect.left; 
-    mouse.y = e.clientY - rect.top; 
+    const rect = canvas.getBoundingClientRect();
+    const scale = Math.min(rect.width / canvas.width, rect.height / canvas.height);
+    const offsetX = (rect.width - canvas.width * scale) / 2;
+    const offsetY = (rect.height - canvas.height * scale) / 2;
+    mouse.x = (e.clientX - rect.left - offsetX) / scale;
+    mouse.y = (e.clientY - rect.top - offsetY) / scale;
+    if (gameState === 'PLAY' && Date.now() > aimModeLockUntil) aimMode = 'mouse'; // Switch to mouse aim when mouse is moved (not right after overlay close)
 });
 
 // MOUSE DOWN/UP FOR CLICK-TO-CONTINUE
@@ -1912,8 +1950,7 @@ function updatePlayerStat(stat, val) {
 }
 
 function devSkipWave() {
-    if(gameState !== "PLAY" || portal.active) return; // Prevent skipping past 10
-    // KILL ALL ENEMIES TO TRIGGER NATURAL END (WHICH HANDLES PORTAL)
+    if(gameState !== "PLAY" || portal.active) return;
     enemies.forEach(e => {
         for(let i=0;i<3;i++) xpOrbs.push({ 
             x:e.x, y:e.y, 
@@ -1924,7 +1961,14 @@ function devSkipWave() {
     });
     enemies = [];
     addFloat("WAVE WIPED", player.x, player.y, "#ff9900");
-    checkWaveClear(); // Trigger next step logic
+    if (wave >= WAVES_PER_DEPTH) {
+        portal.active = true;
+        portal.x = ROOM_WIDTH / 2;
+        portal.y = ROOM_HEIGHT / 2;
+        addFloat("PORTAL OPEN", portal.x, portal.y - 120, "#00ffaa");
+    } else {
+        spawnNextWave(); // Immediate spawn when spamming skip
+    }
 }
 
 function devNextZone() {
@@ -1989,10 +2033,9 @@ window.devUpdate = function() {
     }
 };
 
-canvas.width=window.innerWidth; canvas.height=window.innerHeight; renderBackground();
+applyCanvasResolution();
+renderBackground();
 
 </script>
 </body>
 </html>
-
-
