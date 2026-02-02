@@ -17,7 +17,7 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             background: rgba(2, 2, 5, 0.95);
             z-index: 10; color: white; transition: opacity 0.2s; backdrop-filter: blur(5px);
-        }
+        }   
         .hidden { display: none !important; }
 
         h1 { font-size: 70px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 5px; color: #fff; text-shadow: 0 0 20px #00f2fe, 0 0 40px #00f2fe; }
@@ -890,7 +890,7 @@ function toggleFps() {
     document.getElementById('btn-fps').innerText = gameSettings.fps ? "FPS: ON" : "FPS: OFF";
     document.getElementById('fps-counter').style.display = gameSettings.fps ? 'block' : 'none';
 }
-
+ 
 function changeMouseType(type) {
     gameSettings.mouseType = type;
     updateMouseTypeUI();
