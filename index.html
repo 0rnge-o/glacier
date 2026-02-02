@@ -324,7 +324,7 @@
     <div id="fps-counter">FPS: 60</div>
 
     <div id="dev-console">
-        <h3>DEV CONSOLE (Toggle: ~)</h3>
+        <h3>DEV CONSOLE (Toggle: \)</h3>
         
         <div class="dev-row">
             <span>GOD MODE (No CD/Dmg)</span>
@@ -440,6 +440,7 @@
         </div>
         <button class="menu-btn" onclick="togglePause()">RESUME</button>
         <button class="menu-btn" onclick="openSettings('PAUSE')">SETTINGS</button>
+        <button class="menu-btn" onclick="showLearn()">ARCHIVE</button>
         <button class="menu-btn" style="width:200px; padding:15px; margin-top:0;" onclick="goHome()">QUIT</button>
     </div>
 
@@ -462,7 +463,7 @@
         <!-- SINGLE CONTENT CONTAINER (Dynamically filled) -->
         <div id="fact-container" class="archive-content active"></div>
         
-        <button class="menu-btn" onclick="goHome()">BACK</button>
+        <button class="menu-btn" onclick="goBackFromArchive()">BACK</button>
     </div>
 
     <div id="death-screen" class="overlay hidden">
@@ -776,6 +777,23 @@ const triviaQuestions = [
 
 /* --- NAVIGATION --- */
 function hideAll() { Object.values(screens).forEach(s => s.classList.add('hidden')); }
+function goBackFromArchive() {
+    console.log('goBackFromArchive called, previousState:', previousState);
+    hideAll();
+    if(previousState === 'MENU') {
+        screens.start.classList.remove('hidden');
+        gameState = "MENU";
+    } else if(previousState === 'PAUSE') {
+        screens.pause.classList.remove('hidden');
+        gameState = "PAUSE";
+    } else {
+        // Default to main menu if state is unclear
+        screens.start.classList.remove('hidden');
+        gameState = "MENU";
+    }
+    updateCanvasCursor();
+}
+
 function goHome() { 
     if(transitionTimer) clearTimeout(transitionTimer);
     gameState="MENU"; hideAll(); screens.start.classList.remove('hidden'); 
@@ -784,6 +802,8 @@ function goHome() {
 }
 
 function showLearn() {
+    previousState = gameState; // Remember where we came from
+    console.log('showLearn called, gameState:', gameState, 'previousState set to:', previousState);
     hideAll(); screens.learn.classList.remove('hidden');
     switchArchiveTab('all'); // Start with all tab
 }
@@ -1908,8 +1928,8 @@ window.addEventListener('keydown', e=>{
         else if(!screens.learn.classList.contains('hidden')) goHome();
         else togglePause();
     }
-    // DEV CONSOLE TOGGLE (Backtick)
-    if(e.key === '`' || e.key === '~') {
+    // DEV CONSOLE TOGGLE (Backslash)
+    if(e.key === '\\') {
         const console = document.getElementById('dev-console');
         console.style.display = (console.style.display === 'block') ? 'none' : 'block';
     }
