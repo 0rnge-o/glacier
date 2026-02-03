@@ -54,37 +54,49 @@
             position: relative; display: none; justify-content: center; align-items: center;
             transition: all 0.2s;
         }
+        .skill-box.cooling { border-color: #444; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.6); filter: saturate(0.7) brightness(0.85); }
         .skill-box.ready { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.4); transform: scale(1.05); }
         .skill-key { position: absolute; top: -10px; left: -5px; background: #000; border: 1px solid #666; font-size: 10px; padding: 2px 5px; color: #fff; font-weight: bold; z-index: 4; }
-        .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.85); z-index: 3; transition: height 0.1s linear; }
+        .cooldown-overlay { position: absolute; bottom: 0; left: 0; width: 100%; z-index: 3; transition: height 0.08s linear, opacity 0.12s linear; opacity: 0.95; }
+        .skill-box.cooling .cooldown-overlay {
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.88), rgba(0, 242, 254, 0.18));
+            border-top: 2px solid rgba(0, 242, 254, 0.55);
+            box-shadow: inset 0 12px 22px rgba(0,0,0,0.65);
+        }
+        .skill-box.ready .cooldown-overlay { opacity: 0; }
         
         .ico-shock { width: 24px; height: 24px; border-radius: 50%; border: 3px solid #00f2fe; box-shadow: 0 0 10px #00f2fe; }
         .ico-mag { 
-            width: 24px; height: 24px;
+            width: 26px; height: 26px;
             position: relative;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.95) 0%, rgba(0, 242, 254, 0.22) 35%, rgba(0, 0, 0, 0) 62%);
+            border: 2px solid rgba(0, 242, 254, 0.9);
+            box-shadow: 0 0 14px rgba(0, 242, 254, 0.75), inset 0 0 10px rgba(0, 242, 254, 0.35);
         }
         .ico-mag::before {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 2px;
-            height: 8px;
-            background: #fff;
-            transform-origin: center;
-            box-shadow: 0 0 5px #fff;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.75);
+            transform: translate(-50%, -50%) scaleX(1.08) rotate(20deg);
+            box-shadow: 0 0 8px rgba(255,255,255,0.35);
         }
         .ico-mag::after {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #fff;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
+            background: rgba(255, 255, 255, 0.92);
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 5px #fff;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.55);
         }
         .ico-shield { width: 22px; height: 22px; border: 4px solid #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa; background: rgba(0, 255, 170, 0.2); }
         .ico-multi { width: 6px; height: 18px; background: #ff9900; box-shadow: 10px 0 0 #ff9900, -10px 0 0 #ff9900, 0 0 10px #ff9900; }
@@ -104,10 +116,18 @@
         .trivia-box { width: 700px; background: #0a0a0f; border: 2px solid #fff; padding: 30px; text-align: center; box-shadow: 0 0 30px rgba(255,255,255,0.1); }
         .t-ques { font-size: 24px; margin-bottom: 30px; color: #fff; font-weight: 700; line-height: 1.4; }
         .t-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .t-btn { background: #111; border: 1px solid #555; color: #fff; padding: 20px; font-size: 16px; cursor: pointer; font-weight: bold; transition:0.2s;}
+        .t-btn { background: #111; border: 1px solid #555; color: #fff; padding: 20px; font-size: 16px; cursor: pointer; font-weight: bold; transition:0.2s; min-height: 110px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .t-btn-text { display: block; width: 100%; }
         .t-btn:hover { background: #fff; color: #000; border-color: #fff; }
         .t-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .t-status { font-size: 16px; color: #ff2a6d; margin-bottom: 15px; height: 20px; letter-spacing: 2px; font-weight: 900; }
+
+        .gloss-term { color: #00f2fe; cursor: help; text-shadow: 0 0 8px rgba(0, 242, 254, 0.35); transition: 0.12s; }
+        .gloss-term:hover { color: #fff; text-shadow: 0 0 14px rgba(0, 242, 254, 0.8); }
+        #glossary-tooltip { position: fixed; left: 0; top: 0; max-width: 320px; padding: 12px 14px; background: rgba(5, 5, 8, 0.98); border: 1px solid #00f2fe; box-shadow: 0 0 25px rgba(0, 242, 254, 0.25); color: #fff; z-index: 2000; opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity 0.12s, transform 0.12s; }
+        #glossary-tooltip.show { opacity: 1; transform: translateY(0px); }
+        #glossary-tooltip .gt-title { font-weight: 900; letter-spacing: 1px; color: #00f2fe; margin-bottom: 6px; }
+        #glossary-tooltip .gt-body { color: #ddd; font-size: 14px; line-height: 1.35; }
 
         /* PAUSE & SETTINGS */
         #pause-content, #settings-content {
@@ -500,6 +520,8 @@
         </div>
     </div>
 
+    <div id="glossary-tooltip"></div>
+
     <div id="upgrade-overlay" class="overlay hidden">
         <div class="modal-content">
             <h2 id="up-header" style="color:#fff; font-size:50px; margin-bottom: 10px;">SYSTEM UPGRADE</h2>
@@ -592,6 +614,99 @@ let fpsTimer = 0;
 let frames = 0;
 let aimMode = 'mouse'; // 'mouse' or 'keys'; switch only when user uses that input
 let aimModeLockUntil = 0; // After overlay close, ignore mousemove for a moment so arrow-key aim isn't overridden
+
+const glossary = {
+    "accumulation": "Where snowfall adds more mass to a glacier than is lost; the upper zone where snow turns into firn and ice.",
+    "ablation": "Processes that remove mass from a glacier (melting, sublimation, calving).",
+    "equilibrium line": "The boundary altitude where annual accumulation equals annual ablation; above it the glacier gains mass, below it it loses mass.",
+    "firn": "Old, compacted snow that has survived at least one melt season; an intermediate stage between snow and glacial ice.",
+    "albedo": "How reflective a surface is. Higher albedo reflects more sunlight and reduces melting.",
+    "basal friction": "Resistance between the glacier base and the bed. Lower basal friction can speed up glacier flow.",
+    "meltwater": "Water produced by melting snow/ice. When it reaches the base, it can lubricate the bed and increase sliding.",
+    "basal sliding": "Glacier motion caused by the ice sliding over the bed, often enhanced by meltwater.",
+    "crevasses": "Deep cracks in glacier ice formed by stress when the ice stretches or moves over uneven terrain.",
+    "tensile stress": "Pulling stress that stretches a material; in glaciers it commonly creates crevasses.",
+    "plastic": "When ice deforms and flows rather than breaking; at depth, pressure makes ice behave more plastically.",
+    "calving": "Breaking off of chunks of ice from a glacier terminus into water, forming icebergs.",
+    "sublimation": "Ice turning directly into water vapor without melting.",
+    "terminus": "The end (snout) of a glacier.",
+    "moraines": "Ridges or piles of debris (sediment/rock) transported and deposited by glaciers.",
+    "cirque": "A bowl-shaped hollow carved into a mountain by glacial erosion, often where glaciers form.",
+    "aretes": "Sharp ridges formed when glaciers erode on both sides of a mountain ridge.",
+    "horns": "Sharp, pyramid-like peaks formed when several cirques erode a mountain from multiple sides."
+};
+
+const glossaryTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+const glossaryRegex = new RegExp(`\\b(${glossaryTerms.map(t => t.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
+
+function applyGlossaryToElement(el) {
+    if (!el) return;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(node => {
+        const text = node.nodeValue;
+        if (!text) return;
+        glossaryRegex.lastIndex = 0;
+        if (!glossaryRegex.test(text)) return;
+        glossaryRegex.lastIndex = 0;
+
+        const frag = document.createDocumentFragment();
+        let last = 0;
+        text.replace(glossaryRegex, (match, _term, offset) => {
+            if (offset > last) frag.appendChild(document.createTextNode(text.slice(last, offset)));
+            const span = document.createElement('span');
+            span.className = 'gloss-term';
+            span.dataset.term = match.toLowerCase();
+            span.textContent = match;
+            frag.appendChild(span);
+            last = offset + match.length;
+        });
+        if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+        node.parentNode.replaceChild(frag, node);
+    });
+}
+
+const glossaryTooltip = document.getElementById('glossary-tooltip');
+let glossaryTooltipActive = false;
+
+function positionGlossaryTooltip(e) {
+    if (!glossaryTooltipActive) return;
+    const pad = 12;
+    const margin = 16;
+    let x = e.clientX + margin;
+    let y = e.clientY + margin;
+    const w = glossaryTooltip.offsetWidth;
+    const h = glossaryTooltip.offsetHeight;
+    if (x + w + pad > window.innerWidth) x = e.clientX - w - margin;
+    if (y + h + pad > window.innerHeight) y = e.clientY - h - margin;
+    glossaryTooltip.style.left = Math.max(pad, x) + 'px';
+    glossaryTooltip.style.top = Math.max(pad, y) + 'px';
+}
+
+document.addEventListener('mouseover', (e) => {
+    const termEl = e.target && e.target.closest ? e.target.closest('.gloss-term') : null;
+    if (!termEl) return;
+    const key = (termEl.dataset.term || '').toLowerCase();
+    const def = glossary[key];
+    if (!def) return;
+    glossaryTooltip.innerHTML = `<div class="gt-title">${termEl.textContent}</div><div class="gt-body">${def}</div>`;
+    glossaryTooltip.classList.add('show');
+    glossaryTooltipActive = true;
+    positionGlossaryTooltip(e);
+});
+
+document.addEventListener('mousemove', (e) => { positionGlossaryTooltip(e); });
+
+document.addEventListener('mouseout', (e) => {
+    const leavingTerm = e.target && e.target.closest ? e.target.closest('.gloss-term') : null;
+    if (!leavingTerm) return;
+    const to = e.relatedTarget;
+    if (to && to.closest && to.closest('.gloss-term')) return;
+    glossaryTooltip.classList.remove('show');
+    glossaryTooltipActive = false;
+});
 
 /* --- DATA --- */
 const abilitiesDB = [
@@ -860,6 +975,7 @@ function switchArchiveTab(tabName) {
             <div class="fact-q" style="font-size:18px; line-height:1.4;">${t.q}</div>
             <div class="fact-a-wrap"><div class="fact-a" style="color:#00ffaa; font-weight:bold;">${t.a[0]}</div></div>
         `;
+        applyGlossaryToElement(d.querySelector('.fact-q'));
         container.appendChild(d);
     });
 }
@@ -1059,7 +1175,7 @@ function startDepth() {
         player.x = ROOM_WIDTH/2; player.y = ROOM_HEIGHT/2;
         document.getElementById('level-tag').innerText = DEPTH_NAMES[depthIndex];
         spawnNextWave();
-    }, 2000);
+    }, 3500);
 }
 
 function spawnNextWave() {
@@ -1204,6 +1320,7 @@ function startTrivia() {
     }
     
     document.getElementById('t-ques').innerHTML = formattedQ;
+    applyGlossaryToElement(document.getElementById('t-ques'));
 
     // Answers
     let correct = q.a[0];
@@ -1216,7 +1333,8 @@ function startTrivia() {
     opts.forEach(o => {
         let btn = document.createElement('button');
         btn.className = "t-btn";
-        btn.innerHTML = o;
+        btn.innerHTML = `<span class="t-btn-text">${o}</span>`;
+        applyGlossaryToElement(btn.querySelector('.t-btn-text'));
         btn.onclick = () => {
             if (!triviaLocked) {
                 triviaLocked = true; // Lock answers
@@ -1366,7 +1484,9 @@ function updateSkillUI() {
             let pct = 1 - (timer/max);
             if(active > 0) pct = 0; 
             cd.style.height = (pct*100)+"%";
-            if(timer >= max && active <= 0) box.classList.add('ready'); else box.classList.remove('ready');
+            const ready = (timer >= max && active <= 0);
+            if(ready) box.classList.add('ready'); else box.classList.remove('ready');
+            if(!ready) box.classList.add('cooling'); else box.classList.remove('cooling');
         } else box.style.display="none";
     };
     u('shock', player.hasShock, player.shockTimer, player.shockMax, 0);
@@ -1376,8 +1496,8 @@ function updateSkillUI() {
     const shBox = document.getElementById('skill-shield');
     if(player.hasShield) {
         shBox.style.display="flex";
-        if(player.shieldUp) { shBox.classList.add('ready'); document.getElementById('cd-shield').style.height="0%"; }
-        else { shBox.classList.remove('ready'); document.getElementById('cd-shield').style.height=(player.shieldTimer/player.shieldMax*100)+"%"; }
+        if(player.shieldUp) { shBox.classList.add('ready'); shBox.classList.remove('cooling'); document.getElementById('cd-shield').style.height="0%"; }
+        else { shBox.classList.remove('ready'); shBox.classList.add('cooling'); document.getElementById('cd-shield').style.height=(player.shieldTimer/player.shieldMax*100)+"%"; }
     } else shBox.style.display="none";
 }
 
