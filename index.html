@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Glacier Crawler</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
 
-        body { margin: 0; overflow: hidden; background: #020205; font-family: 'Montserrat', sans-serif; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #020205; font-family: 'Montserrat', sans-serif; user-select: none; touch-action: none; }
         
         #game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
-        canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+        canvas { display: block; width: 100%; height: 100%; object-fit: contain; touch-action: none; }
 
         /* OVERLAYS */
         .overlay {
@@ -778,18 +779,26 @@ const triviaQuestions = [
 /* --- NAVIGATION --- */
 function hideAll() { Object.values(screens).forEach(s => s.classList.add('hidden')); }
 function goBackFromArchive() {
-    console.log('goBackFromArchive called, previousState:', previousState);
-    hideAll();
     if(previousState === 'MENU') {
+        hideAll();
         screens.start.classList.remove('hidden');
         gameState = "MENU";
+        renderBackground();
     } else if(previousState === 'PAUSE') {
+        screens.learn.classList.add('hidden');
         screens.pause.classList.remove('hidden');
         gameState = "PAUSE";
+        updatePauseStats();
+    } else if(previousState === 'PLAY') {
+        hideAll();
+        screens.hud.classList.remove('hidden');
+        gameState = "PLAY";
     } else {
         // Default to main menu if state is unclear
+        hideAll();
         screens.start.classList.remove('hidden');
         gameState = "MENU";
+        renderBackground();
     }
     updateCanvasCursor();
 }
@@ -803,8 +812,13 @@ function goHome() {
 
 function showLearn() {
     previousState = gameState; // Remember where we came from
-    console.log('showLearn called, gameState:', gameState, 'previousState set to:', previousState);
-    hideAll(); screens.learn.classList.remove('hidden');
+    if(previousState === 'PAUSE') {
+        screens.pause.classList.add('hidden');
+        screens.learn.classList.remove('hidden');
+    } else {
+        hideAll();
+        screens.learn.classList.remove('hidden');
+    }
     switchArchiveTab('all'); // Start with all tab
 }
 
@@ -1901,6 +1915,14 @@ function drawRoom() {
 
 window.addEventListener('resize', ()=>{ applyCanvasResolution(); });
 
+window.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+
+window.addEventListener('gesturestart', (e) => { e.preventDefault(); });
+window.addEventListener('gesturechange', (e) => { e.preventDefault(); });
+window.addEventListener('gestureend', (e) => { e.preventDefault(); });
+
 // FIX FOR CHROMEBOOK INPUT ISSUE
 window.addEventListener('focus', () => {
     // Reset all keys to false when window regains focus
@@ -1910,6 +1932,7 @@ window.addEventListener('focus', () => {
 window.addEventListener('keydown', e=>{ 
     // Prevent default for space and arrows to avoid scrolling
     if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') e.preventDefault();
+    if((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=' || e.key === '-' || e.key === '0')) e.preventDefault();
     
     if(e.key==='w' || e.key==='W') keys.w=true; 
     if(e.key==='a' || e.key==='A') keys.a=true; 
@@ -1922,10 +1945,14 @@ window.addEventListener('keydown', e=>{
     if(e.code==='ArrowDown') keys.arrowDown=true;
     if(e.code==='ArrowLeft') keys.arrowLeft=true;
     if(e.code==='ArrowRight') keys.arrowRight=true;
+    if((e.code==='ArrowUp' || e.code==='ArrowDown' || e.code==='ArrowLeft' || e.code==='ArrowRight') && gameState === 'PLAY') {
+        aimMode = 'keys';
+        canvas.style.cursor = "none";
+    }
     
     if(e.key==='Escape') { 
         if(!screens.settings.classList.contains('hidden')) closeSettings();
-        else if(!screens.learn.classList.contains('hidden')) goHome();
+        else if(!screens.learn.classList.contains('hidden')) goBackFromArchive();
         else togglePause();
     }
     // DEV CONSOLE TOGGLE (Backslash)
@@ -1956,7 +1983,10 @@ window.addEventListener('mousemove', e=>{
     const offsetY = (rect.height - canvas.height * scale) / 2;
     mouse.x = (e.clientX - rect.left - offsetX) / scale;
     mouse.y = (e.clientY - rect.top - offsetY) / scale;
-    if (gameState === 'PLAY' && Date.now() > aimModeLockUntil) aimMode = 'mouse'; // Switch to mouse aim when mouse is moved (not right after overlay close)
+    if (gameState === 'PLAY' && Date.now() > aimModeLockUntil) {
+        aimMode = 'mouse';
+        updateCanvasCursor();
+    }
 });
 
 // MOUSE DOWN/UP FOR CLICK-TO-CONTINUE
