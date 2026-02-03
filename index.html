@@ -253,6 +253,33 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
+        .archive-blurbs {
+            width: 80%;
+            overflow-y: auto;
+            max-height: 60vh;
+            padding-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .archive-section {
+            width: 100%;
+            text-align: left;
+            background: rgba(20,20,30, 0.9);
+            border: 1px solid #333;
+            padding: 22px;
+        }
+        .archive-section-title {
+            color: #00f2fe;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        .archive-section-body { color: #ddd; font-size: 16px; line-height: 1.55; }
+        .archive-section-body ul { margin: 12px 0 0 18px; padding: 0; }
+        .archive-section-body li { margin: 8px 0; }
         .question-count {
             color: #00ffaa;
             font-size: 14px;
@@ -467,22 +494,10 @@
 
     <div id="learn-screen" class="overlay hidden">
         <h1 style="font-size: 40px; margin-bottom: 20px;">GLACIER ARCHIVE</h1>
-        <div style="margin-bottom:10px; color:#aaa">CLICK CARDS TO REVEAL DATA</div>
+        <div style="margin-bottom:10px; color:#aaa">ZONE BRIEFS + DEFINITIONS</div>
         
         <!-- TAB NAVIGATION -->
-        <div class="archive-tabs" id="archive-tabs">
-            <div class="archive-tab active" onclick="switchArchiveTab('all')">ALL QUESTIONS</div>
-            <div class="archive-tab" onclick="switchArchiveTab('accum')">ZONE 1: ACCUMULATION</div>
-            <div class="archive-tab" onclick="switchArchiveTab('eq')">ZONE 2: EQUILIBRIUM</div>
-            <div class="archive-tab" onclick="switchArchiveTab('crev')">ZONE 3: CREVASSES</div>
-            <div class="archive-tab" onclick="switchArchiveTab('land')">ZONE 4: LANDFORMS</div>
-            <div class="archive-tab" onclick="switchArchiveTab('abl')">ZONE 5: ABLATION</div>
-            <div class="archive-tab" onclick="switchArchiveTab('mor')">ZONE 6: MORAINE</div>
-            <div class="archive-tab" onclick="switchArchiveTab('general')">GENERAL KNOWLEDGE</div>
-        </div>
-        
-        <!-- SINGLE CONTENT CONTAINER (Dynamically filled) -->
-        <div id="fact-container" class="archive-content active"></div>
+        <div id="archive-container" class="archive-blurbs"></div>
         
         <button class="menu-btn" onclick="goBackFromArchive()">BACK</button>
     </div>
@@ -638,6 +653,8 @@ const glossary = {
 
 const glossaryTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
 const glossaryRegex = new RegExp(`\\b(${glossaryTerms.map(t => t.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
+
+const GENERAL_ARCHIVE_BLURB = `Glaciers grow or shrink based on <span style="color:#00f2fe">mass balance</span>: the difference between <span style="color:#00f2fe">accumulation</span> (snow gain) and <span style="color:#00f2fe">ablation</span> (ice loss). Flow speed is controlled by ice deformation and <span style="color:#00f2fe">basal sliding</span>, which can increase when <span style="color:#00f2fe">meltwater</span> reduces <span style="color:#00f2fe">basal friction</span>. Many surface clues (like the <span style="color:#00f2fe">equilibrium line</span>, crevasse patterns, and moraine deposits) reveal how a glacier is responding to climate and terrain.`;
 
 function applyGlossaryToElement(el) {
     if (!el) return;
@@ -934,50 +951,51 @@ function showLearn() {
         hideAll();
         screens.learn.classList.remove('hidden');
     }
-    switchArchiveTab('all'); // Start with all tab
+    renderArchive();
+}
+
+function renderArchive() {
+    const container = document.getElementById('archive-container');
+    if (!container) return;
+
+    const zoneTags = ['accum', 'eq', 'crev', 'land', 'abl', 'mor'];
+
+    const buildTakeawaysHtml = (tag) => {
+        const qs = triviaQuestions.filter(q => q.tags && q.tags.includes(tag));
+        if (qs.length === 0) return "";
+        const unique = [...new Set(qs.map(q => (q.a && q.a[0]) ? q.a[0] : "").filter(Boolean))];
+        if (unique.length === 0) return "";
+        return `<div style="margin-top:14px; color:#00ffaa; font-weight:900; letter-spacing:1px;">KEY ANSWERS</div><ul>${unique.map(a => `<li>${a}</li>`).join('')}</ul>`;
+    };
+
+    const sections = [];
+    for (let i = 0; i < DEPTH_NAMES.length; i++) {
+        const tag = zoneTags[i];
+        const zoneTitle = `ZONE ${i + 1}: ${DEPTH_NAMES[i]}`;
+        const desc = ZONE_DESCRIPTIONS[i] || "";
+        const takeaways = tag ? buildTakeawaysHtml(tag) : "";
+        sections.push(`
+            <div class="archive-section">
+                <div class="archive-section-title">${zoneTitle}</div>
+                <div class="archive-section-body">${desc}${takeaways}</div>
+            </div>
+        `);
+    }
+
+    const generalTakeaways = buildTakeawaysHtml('general');
+    sections.push(`
+        <div class="archive-section">
+            <div class="archive-section-title">GENERAL KNOWLEDGE</div>
+            <div class="archive-section-body">${GENERAL_ARCHIVE_BLURB}${generalTakeaways}</div>
+        </div>
+    `);
+
+    container.innerHTML = sections.join('');
+    applyGlossaryToElement(container);
 }
 
 function switchArchiveTab(tabName) {
-    // Update active tab
-    document.querySelectorAll('.archive-tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    document.querySelector(`[onclick="switchArchiveTab('${tabName}')"]`).classList.add('active');
-    
-    // Clear and fill the single container
-    const container = document.getElementById('fact-container');
-    container.innerHTML = "";
-    
-    let filteredQuestions = triviaQuestions;
-    if (tabName !== 'all') {
-        filteredQuestions = triviaQuestions.filter(q => q.tags.includes(tabName));
-    }
-    
-    // Update question count in tab
-    const tabElement = document.querySelector(`[onclick="switchArchiveTab('${tabName}')"]`);
-    if (tabElement) {
-        const existingCount = tabElement.querySelector('.question-count');
-        if (existingCount) existingCount.remove();
-        const countSpan = document.createElement('span');
-        countSpan.className = 'question-count';
-        countSpan.textContent = `(${filteredQuestions.length})`;
-        tabElement.appendChild(countSpan);
-    }
-    
-    // Add questions to container
-    filteredQuestions.forEach(t => {
-        const d = document.createElement('div'); 
-        d.className = 'fact-card';
-        d.onclick = function() { this.classList.toggle('revealed'); };
-        
-        d.innerHTML = `
-            <div class="q-label" style="color:#00f2fe; font-size:12px; margin-bottom:10px;">ARCHIVE NODE ${t.id} | ${tabName === 'all' ? t.tags[0].toUpperCase() : tabName.toUpperCase()}</div>
-            <div class="fact-q" style="font-size:18px; line-height:1.4;">${t.q}</div>
-            <div class="fact-a-wrap"><div class="fact-a" style="color:#00ffaa; font-weight:bold;">${t.a[0]}</div></div>
-        `;
-        applyGlossaryToElement(d.querySelector('.fact-q'));
-        container.appendChild(d);
-    });
+    renderArchive();
 }
 
 function openSettings(fromState) {
@@ -1175,7 +1193,7 @@ function startDepth() {
         player.x = ROOM_WIDTH/2; player.y = ROOM_HEIGHT/2;
         document.getElementById('level-tag').innerText = DEPTH_NAMES[depthIndex];
         spawnNextWave();
-    }, 3500);
+    }, 5000);
 }
 
 function spawnNextWave() {
