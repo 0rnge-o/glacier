@@ -118,7 +118,7 @@
         .t-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .t-btn { background: #111; border: 1px solid #555; color: #fff; padding: 20px; font-size: 16px; cursor: pointer; font-weight: bold; transition:0.2s; min-height: 110px; display: flex; align-items: center; justify-content: center; text-align: center; }
         .t-btn-text { display: block; width: 100%; }
-        .t-btn:hover { background: #fff; color: #000; border-color: #fff; }
+        .t-btn:hover { background: #15151c; color: #fff; border-color: #00f2fe; box-shadow: 0 0 16px rgba(0, 242, 254, 0.18); }
         .t-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .t-status { font-size: 16px; color: #ff2a6d; margin-bottom: 15px; height: 20px; letter-spacing: 2px; font-weight: 900; }
 
@@ -1093,11 +1093,44 @@ function showZoneIntro() {
     };
     
     document.getElementById('zone-title').textContent = DEPTH_NAMES[depthIndex];
-    document.getElementById('zone-description').innerHTML = ZONE_DESCRIPTIONS[depthIndex];
+    document.getElementById('zone-description').innerHTML = buildZoneBrief(depthIndex);
+    applyGlossaryToElement(document.getElementById('zone-description'));
     document.getElementById('zone-continue').textContent = "Press a key or click to continue...";
     
     document.addEventListener('keydown', handleIntroContinue);
     canvas.addEventListener('click', handleIntroContinue);
+}
+
+function buildZoneBrief(idx) {
+    const zoneTags = ['accum', 'eq', 'crev', 'land', 'abl', 'mor'];
+    const tag = zoneTags[idx];
+
+    const pool = triviaQuestions.filter(q => q.tags && (q.tags.includes('general') || (tag && q.tags.includes(tag))));
+    const answers = [...new Set(pool.map(q => (q.a && q.a[0]) ? q.a[0] : '').filter(Boolean))];
+
+    const toSentence = (s) => {
+        const t = (s || '').trim();
+        if (!t) return '';
+        return /[.!?]$/.test(t) ? t : (t + '.');
+    };
+
+    const base = (ZONE_DESCRIPTIONS[idx] || '').trim();
+    const basePara = base ? `<p>${base}</p>` : '';
+
+    if (answers.length === 0) return basePara;
+
+    const chunks = [];
+    const targetParas = answers.length > 12 ? 3 : (answers.length > 6 ? 2 : 1);
+    const chunkSize = Math.ceil(answers.length / targetParas);
+    for (let i = 0; i < answers.length; i += chunkSize) chunks.push(answers.slice(i, i + chunkSize));
+
+    const factParas = chunks.slice(0, 3).map((group, i) => {
+        const label = (i === 0) ? 'Key ideas for this zone:' : (i === 1) ? 'More to remember:' : 'Final notes:';
+        const body = group.map(toSentence).join(' ');
+        return `<p><span style="color:#00ffaa; font-weight:900; letter-spacing:1px;">${label}</span> ${body}</p>`;
+    }).join('');
+
+    return basePara + factParas;
 }
 
 function handleIntroContinue(e) {
