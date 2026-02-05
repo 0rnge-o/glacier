@@ -1117,7 +1117,7 @@ function showZoneIntro() {
     document.getElementById('zone-title').textContent = DEPTH_NAMES[depthIndex];
     document.getElementById('zone-description').innerHTML = buildZoneBrief(depthIndex);
     applyGlossaryToElement(document.getElementById('zone-description'));
-    document.getElementById('zone-continue').textContent = "Press a key or click to continue...";
+    document.getElementById('zone-continue').textContent = "Press any key to continue...";
     
     document.addEventListener('keydown', handleIntroContinue);
     canvas.addEventListener('click', handleIntroContinue);
