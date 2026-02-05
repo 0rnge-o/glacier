@@ -8,7 +8,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
 
         body { margin: 0; overflow: hidden; background: #020205; font-family: 'Montserrat', sans-serif; user-select: none; touch-action: none; }
-        
+
         #game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
         canvas { display: block; width: 100%; height: 100%; object-fit: contain; touch-action: none; }
 
@@ -568,7 +568,8 @@ const screens = {
 const ROOM_WIDTH = 2400; // Large Arena
 const ROOM_HEIGHT = 1800;
 const WAVES_PER_DEPTH = 10;
-const MAX_PARTICLES = 100; // Performance Cap
+const MAX_PARTICLES = 200; // Increased for better coverage
+const SNOW_PARTICLES = []; // Separate array for snow particles
 const MAX_XP = 300; // Performance Cap
 
 const DEPTH_NAMES = [
@@ -1086,6 +1087,27 @@ function startGame() {
 function showZoneIntro() {
     gameState = "INTRO";
     screens.zoneIntro.classList.remove('hidden');
+    
+    // Pre-simulate snow during the intro for Zone of Accumulation
+    if (depthIndex === 0) {
+        // Clear existing snow
+        SNOW_PARTICLES.length = 0;
+        
+        // Pre-populate with snow throughout the screen
+        for (let i = 0; i < 100; i++) {
+            createSnowfallParticle(Math.random() * ROOM_HEIGHT, true);
+        }
+        
+        // Simulate a few seconds of snowfall
+        const simTime = 3; // seconds
+        const steps = 60 * simTime; // 60fps * seconds
+        const dt = 1000/60; // 60fps in ms
+        
+        for (let i = 0; i < steps; i++) {
+            updateSnowParticles(dt);
+        }
+    }
+    
     // Remember which keys were held so we only continue on a *different* key or after release
     introKeysHeldWhenShown = {
         w: keys.w, a: keys.a, s: keys.s, d: keys.d, space: keys.space,
@@ -1630,7 +1652,60 @@ function applyCamera() {
     ctx.translate(-camera.x+sx, -camera.y+sy);
 }
 
+function createSnowfallParticle(initialY = -20, randomY = false) {
+    if (SNOW_PARTICLES.length >= MAX_PARTICLES) return;
+    
+    // Calculate spawn area within room bounds
+    const x = 20 + Math.random() * (ROOM_WIDTH - 40);
+    // If randomY is true, spawn anywhere from top to bottom of screen
+    const y = randomY ? Math.random() * ROOM_HEIGHT : (initialY || -20);
+    
+    SNOW_PARTICLES.push({
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 0.5, // Slower side-to-side drift
+        vy: Math.random() * 0.8 + 0.5,   // Slower downward speed
+        c: 'rgba(255, 255, 255, 0.7)',   // Slightly transparent
+        s: Math.random() * 2 + 1,        // Varying size
+        // No lifetime - snow stays until it hits bottom or goes off screen
+    });
+}
+
+function updateSnowParticles(dt) {
+    // Always update snow particles, even when not in Zone 1
+    for (let i = SNOW_PARTICLES.length - 1; i >= 0; i--) {
+        const p = SNOW_PARTICLES[i];
+        
+        // Update position
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        
+        // Bounce off walls
+        if (p.x < 20) { p.x = 20; p.vx *= -0.5; }
+        if (p.x > ROOM_WIDTH - 20) { p.x = ROOM_WIDTH - 20; p.vx *= -0.5; }
+        
+        // Remove if below bottom of screen
+        if (p.y > ROOM_HEIGHT) {
+            SNOW_PARTICLES.splice(i, 1);
+        }
+    }
+    
+    // Add new snow particles if in Zone 1
+    if (depthIndex === 0) {
+        // Create a more consistent flow of snow (2-3 particles per frame)
+        const snowPerFrame = 2 + Math.random();
+        for (let i = 0; i < snowPerFrame; i++) {
+            if (Math.random() < 0.5) { // 50% chance to spawn a new flake each frame
+                createSnowfallParticle();
+            }
+        }
+    }
+}
+
 function update(dt) {
+    // Always update snow particles
+    updateSnowParticles(dt);
+    
     mouse.wx = mouse.x + camera.x; mouse.wy = mouse.y + camera.y;
 
     // Movement (Scaled by DT)
@@ -2007,6 +2082,21 @@ function drawRoom() {
         ctx.fillText("ENTER", 0, 0); 
 
         ctx.restore(); // Restore translation
+    }
+
+    // Draw snow particles (only in Zone 1)
+    if (depthIndex === 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.7;
+        SNOW_PARTICLES.forEach(p => {
+            if (p.y < camera.y + canvas.height && p.y > camera.y - 50) { // Only draw visible particles
+                ctx.fillStyle = p.c;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+        ctx.restore();
     }
 
     // Visuals
