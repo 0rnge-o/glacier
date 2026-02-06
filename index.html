@@ -372,7 +372,7 @@
     <div id="fps-counter">FPS: 60</div>
 
     <div id="dev-console">
-        <h3>DEV CONSOLE (Toggle: \)</h3>
+        <h3>DEV CONSOLE (Toggle: .)</h3>
         
         <div class="dev-row">
             <span>GOD MODE (No CD/Dmg)</span>
@@ -2227,8 +2227,8 @@ window.addEventListener('keydown', e=>{
         else if(!screens.learn.classList.contains('hidden')) goBackFromArchive();
         else togglePause();
     }
-    // DEV CONSOLE TOGGLE (Backslash)
-    if(e.key === '\\') {
+    // DEV CONSOLE TOGGLE (Period)
+    if(e.key === '.') {
         const console = document.getElementById('dev-console');
         console.style.display = (console.style.display === 'block') ? 'none' : 'block';
     }
