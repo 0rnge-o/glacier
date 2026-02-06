@@ -426,10 +426,34 @@
     <div id="start-screen" class="overlay">
         <h1>GLACIER CRAWLER</h1>
         <h2 style="font-size: 24px; letter-spacing: 2px;">DEEP DIVE PROTOCOL</h2>
+        <button class="menu-btn" onclick="showTutorial()">HOW TO PLAY</button>
         <button class="menu-btn" onclick="startGame()">INITIATE</button>
         <button class="menu-btn" onclick="openSettings('MENU')">SETTINGS</button>
-        <button class="menu-btn" onclick="showLearn()">ARCHIVE</button>
+        <button class="menu-btn" onclick="showLearn()">LEARN</button>
         <div id="version-badge">v1.8</div>
+    </div>
+
+    <div id="tutorial-screen" class="overlay hidden">
+        <h1>HOW TO PLAY</h1>
+        <div style="display: flex; gap: 30px; align-items: flex-start; margin-bottom: 30px;">
+            <div style="color: #ccc; font-size: 18px; max-width: 500px; text-align: left;">
+                <div style="margin-bottom: 20px;"><strong>MOVEMENT:</strong><br>WASD to move • Arrow keys or mouse to aim • Auto-fire at cursor</div>
+                <div style="margin-bottom: 20px;"><strong>COMBAT:</strong><br>Every 4th shot pierces enemies • Survive waves of geometric shapes • Collect blue XP orbs</div>
+                <div style="margin-bottom: 20px;"><strong>ABILITIES:</strong><br>SPACE - Shockwave<br>Q - Gravity Well (pulls XP orbs)<br>E - Multi-shot (fires 3 bullets)<br>Shield - Recharges automatically</div>
+                <div style="margin-bottom: 20px;"><strong>PROGRESSION:</strong><br>Gain XP to level up • Every 4th level unlocks new abilities • Choose stat upgrades between levels</div>
+                <div style="margin-bottom: 20px;"><strong>TIPS:</strong><br>Large enemies (6+ sides) may spawn smaller versions • Keep moving to avoid damage • Use abilities when overwhelmed</div>
+            </div>
+            <div style="color: #ccc; font-size: 16px; max-width: 300px; text-align: center;">
+                <div style="margin-bottom: 15px;"><strong>SHOOTING DEMONSTRATION:</strong></div>
+                <canvas id="tutorial-canvas" width="280" height="200" style="border: 1px solid #444; background: #020205;"></canvas>
+                <div style="margin-top: 10px; font-size: 14px;">
+                    <div>Player shoots continuously</div>
+                    <div>4th shot (white) pierces</div>
+                    <div>Regular shots (blue)</div>
+                </div>
+            </div>
+        </div>
+        <button class="menu-btn" onclick="closeTutorial()">BACK</button>
     </div>
 
     <div id="settings-screen" class="overlay hidden">
@@ -492,12 +516,12 @@
         </div>
         <button class="menu-btn" onclick="togglePause()">RESUME</button>
         <button class="menu-btn" onclick="openSettings('PAUSE')">SETTINGS</button>
-        <button class="menu-btn" onclick="showLearn()">ARCHIVE</button>
+        <button class="menu-btn" onclick="showLearn()">LEARN</button>
         <button class="menu-btn" style="width:200px; padding:15px; margin-top:0;" onclick="goHome()">QUIT</button>
     </div>
 
     <div id="learn-screen" class="overlay hidden">
-        <h1 style="font-size: 40px; margin-bottom: 20px;">GLACIER ARCHIVE</h1>
+        <h1 style="font-size: 40px; margin-bottom: 20px;">GLACIER LEARN</h1>
         <div style="margin-bottom:10px; color:#aaa">ZONE BRIEFS + DEFINITIONS</div>
         
         <!-- TAB NAVIGATION -->
@@ -564,6 +588,7 @@ const screens = {
     trivia: document.getElementById('trivia-overlay'),
     pause: document.getElementById('pause-screen'),
     learn: document.getElementById('learn-screen'),
+    tutorial: document.getElementById('tutorial-screen'),
     depth: document.getElementById('depth-screen'),
     zoneIntro: document.getElementById('zone-intro')
 };
@@ -958,6 +983,99 @@ function showLearn() {
         screens.learn.classList.remove('hidden');
     }
     renderArchive();
+}
+
+function showTutorial() {
+    hideAll();
+    screens.tutorial.classList.remove('hidden');
+    startTutorialAnimation();
+}
+
+function closeTutorial() {
+    screens.tutorial.classList.add('hidden');
+    screens.start.classList.remove('hidden');
+    stopTutorialAnimation();
+}
+
+let tutorialAnimation = null;
+
+function startTutorialAnimation() {
+    const canvas = document.getElementById('tutorial-canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    let time = 0;
+    
+    const player = { x: 40, y: 100, aimAngle: 0 };
+    const bullets = [];
+    let shotCount = 0;
+    
+    function animate() {
+        ctx.fillStyle = '#020205';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw actual player sprite
+        ctx.save(); 
+        ctx.translate(player.x, player.y); 
+        ctx.rotate(player.aimAngle);
+        ctx.fillStyle = "#000"; 
+        ctx.strokeStyle = "#fff"; 
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 10; 
+        ctx.shadowColor = "#00f2fe";
+        ctx.beginPath(); 
+        ctx.moveTo(15, 0); 
+        ctx.lineTo(-12, 12); 
+        ctx.lineTo(-6, 0); 
+        ctx.lineTo(-12, -12); 
+        ctx.closePath();
+        ctx.fill(); 
+        ctx.stroke(); 
+        ctx.shadowBlur = 0;
+        ctx.restore();
+        
+        // Shoot bullets every 20 frames
+        if (time % 20 === 0) {
+            shotCount++;
+            const isPierce = shotCount % 4 === 0;
+            bullets.push({
+                x: player.x + Math.cos(player.aimAngle) * 20,
+                y: player.y + Math.sin(player.aimAngle) * 20,
+                vx: Math.cos(player.aimAngle) * 4,
+                vy: Math.sin(player.aimAngle) * 4,
+                pierce: isPierce
+            });
+        }
+        
+        // Update and draw bullets
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            const bullet = bullets[i];
+            bullet.x += bullet.vx;
+            bullet.y += bullet.vy;
+            
+            ctx.fillStyle = bullet.pierce ? '#fff' : '#00f2fe';
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Remove bullets that go off screen
+            if (bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                bullets.splice(i, 1);
+            }
+        }
+        
+        time++;
+        tutorialAnimation = requestAnimationFrame(animate);
+    }
+    
+    animate();
+}
+
+function stopTutorialAnimation() {
+    if (tutorialAnimation) {
+        cancelAnimationFrame(tutorialAnimation);
+        tutorialAnimation = null;
+    }
 }
 
 function renderArchive() {
@@ -2362,7 +2480,7 @@ window.addEventListener('gestureend', (e) => { e.preventDefault(); });
 // FIX FOR CHROMEBOOK INPUT ISSUE
 window.addEventListener('focus', () => {
     // Reset all keys to false when window regains focus
-    keys = { w:false, a:false, s:false, d:false, space:false, q:false, e:false, arrowUp:false, arrowDown:false, arrowLeft:false, arrowRight:false };
+    keys = { w:false, a:false, s:false, d:false,  space:false, q:false, e:false, arrowUp:false, arrowDown:false, arrowLeft:false, arrowRight:false };
 });
 
 window.addEventListener('keydown', e=>{ 
