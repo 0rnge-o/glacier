@@ -490,6 +490,7 @@
         <h1 style="color: #00ffaa; font-size: 80px; text-shadow: 0 0 30px #00ffaa;">MISSION COMPLETE</h1>
         <h2 style="color: #fff;">GLACIER CONQUERED</h2>
         <div style="color: #ccc; margin-bottom: 30px; font-size: 18px;">ALL SAMPLES COLLECTED</div>
+        <div id="win-time" style="color: #00f2fe; margin-bottom: 30px; font-size: 20px; font-weight: bold;">Time: 00:00</div>
         <button class="menu-btn" onclick="startGame()">RESTART</button>
         <button class="menu-btn" onclick="goHome()">MAIN MENU</button>
     </div>
@@ -533,6 +534,7 @@
     <div id="death-screen" class="overlay hidden">
         <h1 style="color: #ff2a6d;">HULL CRITICAL</h1>
         <h2 id="final-score"></h2>
+        <div id="death-time" style="color: #00f2fe; margin-bottom: 30px; font-size: 20px; font-weight: bold;">Time: 00:00</div>
         <button class="menu-btn" onclick="startGame()">REBOOT</button>
         <button class="menu-btn" onclick="goHome()">MAIN MENU</button>
     </div>
@@ -686,6 +688,9 @@ const ZONE_DESCRIPTIONS = [
 
 // STATE
 let gameState="MENU", previousState="MENU"; 
+let gameStartTime = 0;
+let gameEndTime = 0;
+
 let gameSettings = { 
     bloom: false, 
     fps: false,
@@ -1256,6 +1261,7 @@ function startGame() {
     
     depthIndex = 0;
     gameTime = 0;
+    gameStartTime = Date.now(); // Start timing
     aimMode = 'mouse';
     nextLevelIsModule = false;
     resetPlayer();
@@ -1987,8 +1993,15 @@ function update(dt) {
             if(depthIndex >= DEPTH_NAMES.length) {
                 // WIN CONDITION
                 gameState = "WIN";
+                gameEndTime = Date.now();
+                const totalTime = Math.floor((gameEndTime - gameStartTime) / 1000);
+                const minutes = Math.floor(totalTime / 60);
+                const seconds = totalTime % 60;
+                const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
                 hideAll();
                 screens.win.classList.remove('hidden');
+                document.getElementById('win-time').innerText = `Time: ${timeString}`;
             } else {
                 showZoneIntro(); // Always show intro for next zone
             }
@@ -2205,8 +2218,16 @@ function update(dt) {
                 addFloat(`-${dmg}`, player.x, player.y, "#ff0000");
                 updateHUD();
                 if(player.hp<=0) { 
-                    gameState="DEAD"; hideAll(); screens.death.classList.remove('hidden'); 
+                    gameState="DEAD"; 
+                    gameEndTime = Date.now();
+                    const totalTime = Math.floor((gameEndTime - gameStartTime) / 1000);
+                    const minutes = Math.floor(totalTime / 60);
+                    const seconds = totalTime % 60;
+                    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    hideAll(); screens.death.classList.remove('hidden'); 
                     document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
+                    document.getElementById('death-time').innerText = `Time: ${timeString}`;
                 }
             } else {
                 // Non-kamikaze: nerfed to 1 damage per 0.5s contact (not per frame)
@@ -2216,8 +2237,16 @@ function update(dt) {
                     updateHUD();
                 }
                 if(player.hp<=0) { 
-                    gameState="DEAD"; hideAll(); screens.death.classList.remove('hidden'); 
+                    gameState="DEAD"; 
+                    gameEndTime = Date.now();
+                    const totalTime = Math.floor((gameEndTime - gameStartTime) / 1000);
+                    const minutes = Math.floor(totalTime / 60);
+                    const seconds = totalTime % 60;
+                    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    hideAll(); screens.death.classList.remove('hidden'); 
                     document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
+                    document.getElementById('death-time').innerText = `Time: ${timeString}`;
                 }
             }
         }
