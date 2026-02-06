@@ -1951,24 +1951,25 @@ function update(dt) {
 
     // Enemies
     enemies.forEach((e, index)=>{
-        // Skip update for distant enemies every other frame
+        // Always update movement for consistent speed, but skip expensive updates for distant enemies
         const distToPlayer = Math.sqrt((e.x - player.x)**2 + (e.y - player.y)**2);
-        const shouldUpdate = (distToPlayer < 500) || (frameSkipCounter % UPDATE_EVERY_N_FRAMES === 0);
+        const shouldUpdateExpensive = (distToPlayer < 500) || (frameSkipCounter % UPDATE_EVERY_N_FRAMES === 0);
         
-        if(shouldUpdate) {
-            // Update immunity timer
-            if(e.immunity !== undefined) {
-                e.immunity -= dt;
-                if(e.immunity < 0) e.immunity = 0;
-            }
-            
-            let a = Math.atan2(player.y-e.y, player.x-e.x);
-            e.x += Math.cos(a)*e.spd * dt; 
-            e.y += Math.sin(a)*e.spd * dt; 
-            e.angle += e.spin * dt;
-            if(e.x<e.size) e.x=e.size; if(e.x>ROOM_WIDTH-e.size) e.x=ROOM_WIDTH-e.size;
-            if(e.y<e.size) e.y=e.size; if(e.y>ROOM_HEIGHT-e.size) e.y=ROOM_HEIGHT-e.size;
+        // Always update movement and immunity
+        if(e.immunity !== undefined) {
+            e.immunity -= dt;
+            if(e.immunity < 0) e.immunity = 0;
+        }
+        
+        let a = Math.atan2(player.y-e.y, player.x-e.x);
+        e.x += Math.cos(a)*e.spd * dt; 
+        e.y += Math.sin(a)*e.spd * dt; 
+        e.angle += e.spin * dt;
+        if(e.x<e.size) e.x=e.size; if(e.x>ROOM_WIDTH-e.size) e.x=ROOM_WIDTH-e.size;
+        if(e.y<e.size) e.y=e.size; if(e.y>ROOM_HEIGHT-e.size) e.y=ROOM_HEIGHT-e.size;
 
+        // Only update expensive visual effects for nearby enemies
+        if(shouldUpdateExpensive) {
             // Kamikaze Flash (reduced frequency for performance)
             if(e.type === 'kamikaze') {
                 // Only flash every 200ms instead of 100ms
@@ -2155,7 +2156,7 @@ function killEnemy(e, index) {
                 maxHp: 1,
                 sides: e.sides,
                 size: e.size * 0.5, // Half the size
-                spd: e.spd * 1.5, // 50% faster
+                spd: e.spd, // Same speed as parent
                 color: colors[(e.sides-3)%7],
                 angle: 0,
                 spin: (Math.random()-0.5)*0.3, // More spin
