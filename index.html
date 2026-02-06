@@ -593,6 +593,64 @@ const screens = {
     zoneIntro: document.getElementById('zone-intro')
 };
 
+// Simple Code for Dev Menu Unlock (4-1)
+const DEV_CODE_SEQUENCE = ['4', '1'];
+let devCodeIndex = 0;
+let devMenuUnlocked = false;
+
+function showDevNotification(message, color) {
+    // Create or update notification element
+    let notification = document.getElementById('dev-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'dev-notification';
+        notification.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: ${color};
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10000;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        `;
+        document.body.appendChild(notification);
+    }
+    
+    notification.textContent = message;
+    notification.style.color = color;
+    notification.style.opacity = '1';
+    
+    // Fade out after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+    }, 3000);
+}
+
+function checkDevCode(key) {
+    if (key === DEV_CODE_SEQUENCE[devCodeIndex]) {
+        devCodeIndex++;
+        if (devCodeIndex === DEV_CODE_SEQUENCE.length) {
+            devMenuUnlocked = !devMenuUnlocked; // Toggle on/off
+            devCodeIndex = 0;
+            
+            if (devMenuUnlocked) {
+                showDevNotification("DEV MENU UNLOCKED!", "#ff00de");
+            } else {
+                showDevNotification("DEV MENU LOCKED!", "#ff2a6d");
+                // Hide dev console if it's open
+                const console = document.getElementById('dev-console');
+                if (console.style.display === 'block') {
+                    console.style.display = 'none';
+                }
+            }
+        }
+    } else {
+        devCodeIndex = 0;
+    }
+}
+
 // CONSTANTS
 const ROOM_WIDTH = 2400; // Large Arena
 const ROOM_HEIGHT = 1800;
@@ -2480,10 +2538,13 @@ window.addEventListener('gestureend', (e) => { e.preventDefault(); });
 // FIX FOR CHROMEBOOK INPUT ISSUE
 window.addEventListener('focus', () => {
     // Reset all keys to false when window regains focus
-    keys = { w:false, a:false, s:false, d:false,  space:false, q:false, e:false, arrowUp:false, arrowDown:false, arrowLeft:false, arrowRight:false };
+    keys = { w:false, a:false, s:false, d:false, space:false, q:false, e:false, arrowUp:false, arrowDown:false, arrowLeft:false, arrowRight:false };
 });
 
 window.addEventListener('keydown', e=>{ 
+    // Check dev code (4-1)
+    checkDevCode(e.key);
+    
     // Prevent default for space and arrows to avoid scrolling
     if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') e.preventDefault();
     if((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=' || e.key === '-' || e.key === '0')) e.preventDefault();
@@ -2499,6 +2560,7 @@ window.addEventListener('keydown', e=>{
     if(e.code==='ArrowDown') keys.arrowDown=true;
     if(e.code==='ArrowLeft') keys.arrowLeft=true;
     if(e.code==='ArrowRight') keys.arrowRight=true;
+    
     if((e.code==='ArrowUp' || e.code==='ArrowDown' || e.code==='ArrowLeft' || e.code==='ArrowRight') && gameState === 'PLAY') {
         aimMode = 'keys';
         canvas.style.cursor = "none";
@@ -2509,8 +2571,8 @@ window.addEventListener('keydown', e=>{
         else if(!screens.learn.classList.contains('hidden')) goBackFromArchive();
         else togglePause();
     }
-    // DEV CONSOLE TOGGLE (Period)
-    if(e.key === '.') {
+    // DEV CONSOLE TOGGLE (Period) - Only works if unlocked
+    if(e.key === '.' && devMenuUnlocked) {
         const console = document.getElementById('dev-console');
         console.style.display = (console.style.display === 'block') ? 'none' : 'block';
     }
