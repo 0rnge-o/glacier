@@ -402,6 +402,10 @@
         </div>
 
         <div style="margin-top:10px; color:#aaa; font-size:12px;">NAVIGATION</div>
+        <div class="dev-row">
+            <span>Set Depth (0-6)</span>
+            <input type="number" id="dev-depth" class="dev-input" min="0" max="6" onchange="devSetDepth(this.value)">
+        </div>
         <button class="dev-btn" onclick="devInstantLevel()">INSTANT LEVEL UP</button>
         <button class="dev-btn" onclick="devSkipWave()">SKIP WAVE (KILL ALL)</button>
         <button class="dev-btn" onclick="devNextZone()">NEXT ZONE (TELEPORT)</button>
@@ -573,27 +577,27 @@ const SNOW_PARTICLES = []; // Separate array for snow particles
 const MAX_XP = 300; // Performance Cap
 
 const DEPTH_NAMES = [
-    "ZONE OF ACCUMULATION",
-    "EQUILIBRIUM LINE",
-    "CREVASSES",
+    "MORAINE DEPOSITS",
+    "ZONE OF ABLATION", 
     "LANDFORMS & CIRQUE",
-    "ZONE OF ABLATION",
-    "MORAINE DEPOSITS"
+    "CREVASSES",
+    "EQUILIBRIUM LINE",
+    "ZONE OF ACCUMULATION"
 ];
 
 // Zone descriptions for educational intros
 const ZONE_DESCRIPTIONS = [
-    `The <span style="color:#00f2fe">Zone of Accumulation</span> is where snowfall exceeds melting. Fresh snow compresses into firn and eventually glacial ice through pressure. This zone is characterized by positive mass balance and serves as the glacier's "fuel tank." The snowline marks the boundary between accumulation and ablation zones.`,
-    
-    `The <span style="color:#00f2fe">Equilibrium Line</span> represents the altitude where accumulation equals ablation annually. Below this line, the glacier loses mass; above it, gains mass. This dynamic balance point fluctuates with climate conditions and is critical for predicting glacier health and behavior.`,
-    
-    `<span style="color:#00f2fe">Crevasses</span> are deep fractures in glacial ice caused by tensile stress. They form when ice moves over uneven terrain or changes velocity. Despite appearances, crevasses rarely extend beyond 50 meters deep due to plastic ice flow under pressure. They're navigation hazards but important for studying internal glacier structure.`,
-    
-    `Glacial <span style="color:#00f2fe">Landforms</span> like cirques, aretes, and horns result from erosional processes. A cirque is an amphitheater-shaped basin carved by ice accumulation and rotational sliding. When multiple cirques converge, they create distinctive sharp ridges and pyramidal peaks that define alpine landscapes.`,
+    `<span style="color:#00f2fe">Moraines</span> are accumulations of glacially transported debris. Terminal moraines mark maximum ice extent, lateral moraines form along glacier edges, and medial moraines result from merging glaciers. These deposits preserve climate history and influence post-glacial ecosystems.`,
     
     `The <span style="color:#00f2fe">Zone of Ablation</span> is where ice loss exceeds accumulation through melting, sublimation, and calving. Ablation processes include surface melt, basal melt from geothermal heat, and frontal ablation at glacier termini. This zone determines a glacier's net mass balance and retreat rate.`,
     
-    `<span style="color:#00f2fe">Moraines</span> are accumulations of glacially transported debris. Terminal moraines mark maximum ice extent, lateral moraines form along glacier edges, and medial moraines result from merging glaciers. These deposits preserve climate history and influence post-glacial ecosystems.`
+    `Glacial <span style="color:#00f2fe">Landforms</span> like cirques, aretes, and horns result from erosional processes. A cirque is an amphitheater-shaped basin carved by ice accumulation and rotational sliding. When multiple cirques converge, they create distinctive sharp ridges and pyramidal peaks that define alpine landscapes.`,
+    
+    `<span style="color:#00f2fe">Crevasses</span> are deep fractures in glacial ice caused by tensile stress. They form when ice moves over uneven terrain or changes velocity. Despite appearances, crevasses rarely extend beyond 50 meters deep due to plastic ice flow under pressure. They're navigation hazards but important for studying internal glacier structure.`,
+    
+    `The <span style="color:#00f2fe">Equilibrium Line</span> represents the altitude where accumulation equals ablation annually. Below this line, the glacier loses mass; above it, gains mass. This dynamic balance point fluctuates with climate conditions and is critical for predicting glacier health and behavior.`,
+    
+    `The <span style="color:#00f2fe">Zone of Accumulation</span> is where snowfall exceeds melting. Fresh snow compresses into firn and eventually glacial ice through pressure. This zone is characterized by positive mass balance and serves as the glacier's "fuel tank." The snowline marks the boundary between accumulation and ablation zones.`
 ];
 
 // STATE
@@ -1088,24 +1092,22 @@ function showZoneIntro() {
     gameState = "INTRO";
     screens.zoneIntro.classList.remove('hidden');
     
-    // Pre-simulate snow during the intro for Zone of Accumulation
-    if (depthIndex === 0) {
-        // Clear existing snow
-        SNOW_PARTICLES.length = 0;
-        
-        // Pre-populate with snow throughout the screen
-        for (let i = 0; i < 100; i++) {
-            createSnowfallParticle(Math.random() * ROOM_HEIGHT, true);
-        }
-        
-        // Simulate a few seconds of snowfall
-        const simTime = 3; // seconds
-        const steps = 60 * simTime; // 60fps * seconds
-        const dt = 1000/60; // 60fps in ms
-        
-        for (let i = 0; i < steps; i++) {
-            updateSnowParticles(dt);
-        }
+    // Pre-simulate snow during the intro
+    // Clear existing snow
+    SNOW_PARTICLES.length = 0;
+    
+    // Pre-populate with snow throughout the screen
+    for (let i = 0; i < 100; i++) {
+        createSnowfallParticle(Math.random() * ROOM_HEIGHT, true);
+    }
+    
+    // Simulate a few seconds of snowfall
+    const simTime = 3; // seconds
+    const steps = 60 * simTime; // 60fps * seconds
+    const dt = 1000/60; // 60fps in ms
+    
+    for (let i = 0; i < steps; i++) {
+        updateSnowParticles(dt);
     }
     
     // Remember which keys were held so we only continue on a *different* key or after release
@@ -1173,7 +1175,8 @@ function handleIntroContinue(e) {
         if (e.code === 'Space') e.preventDefault();
         const codeToKey = { 'KeyW':'w','KeyA':'a','KeyS':'s','KeyD':'d','Space':'space','ArrowUp':'arrowUp','ArrowDown':'arrowDown','ArrowLeft':'arrowLeft','ArrowRight':'arrowRight' };
         const keyName = codeToKey[e.code];
-        if (keyName && introKeysHeldWhenShown[keyName]) return; // still the same key held - ignore until they release or press another key
+        // Check if this key was initially held AND is still currently held
+        if (keyName && introKeysHeldWhenShown[keyName] && keys[keyName]) return; // still the same key held - ignore until they release or press another key
     }
     
     document.removeEventListener('keydown', handleIntroContinue);
@@ -1248,7 +1251,7 @@ function startDepth() {
         player.x = ROOM_WIDTH/2; player.y = ROOM_HEIGHT/2;
         document.getElementById('level-tag').innerText = DEPTH_NAMES[depthIndex];
         spawnNextWave();
-    }, 5000);
+    }, 2000);
 }
 
 function spawnNextWave() {
@@ -1690,14 +1693,12 @@ function updateSnowParticles(dt) {
         }
     }
     
-    // Add new snow particles if in Zone 1
-    if (depthIndex === 0) {
-        // Create a more consistent flow of snow (2-3 particles per frame)
-        const snowPerFrame = 2 + Math.random();
-        for (let i = 0; i < snowPerFrame; i++) {
-            if (Math.random() < 0.5) { // 50% chance to spawn a new flake each frame
-                createSnowfallParticle();
-            }
+    // Add new snow particles
+    // Create a more consistent flow of snow (2-3 particles per frame)
+    const snowPerFrame = 2 + Math.random();
+    for (let i = 0; i < snowPerFrame; i++) {
+        if (Math.random() < 0.5) { // 50% chance to spawn a new flake each frame
+            createSnowfallParticle();
         }
     }
 }
@@ -1751,7 +1752,11 @@ function update(dt) {
                     addFloat(Math.floor(player.blastDmg), e.x, e.y, "#00f2fe"); 
                     let a=Math.atan2(e.y-player.y, e.x-player.x);
                     // Pushback scaled by DT isn't necessary for impulse, but consistent force
-                    e.x+=Math.cos(a)*350; e.y+=Math.sin(a)*350; 
+                    e.x+=Math.cos(a)*350; e.y+=Math.sin(a)*350;
+                    
+                    // Clamp enemy position to map bounds
+                    e.x = Math.max(20, Math.min(ROOM_WIDTH - 20, e.x));
+                    e.y = Math.max(20, Math.min(ROOM_HEIGHT - 20, e.y)); 
                     
                     // Kill check immediately
                     if(e.hp <= 0) {
@@ -1884,6 +1889,10 @@ function update(dt) {
                 let pushA = Math.atan2(e.y-player.y, e.x-player.x);
                 e.x += Math.cos(pushA) * 300; 
                 e.y += Math.sin(pushA) * 300;
+                
+                // Clamp enemy position to map bounds
+                e.x = Math.max(20, Math.min(ROOM_WIDTH - 20, e.x));
+                e.y = Math.max(20, Math.min(ROOM_HEIGHT - 20, e.y));
 
                 // KAMIKAZE SPECIFIC: If it hit the shield, it explodes safely (or dies)
                 if(e.type === 'kamikaze') {
@@ -1980,9 +1989,13 @@ function killEnemy(e, index) {
     let xpVal = e.xpValue || ((e.sides * e.sides) + (depthIndex * 20));
     
     // Create XP orbs - ALL BLUE, same size
+    // Clamp enemy position to map bounds to prevent XP orbs from spawning outside
+    const clampedX = Math.max(20, Math.min(ROOM_WIDTH - 20, e.x));
+    const clampedY = Math.max(20, Math.min(ROOM_HEIGHT - 20, e.y));
+    
     for(let i=0;i<3;i++) {
         xpOrbs.push({ 
-            x:e.x, y:e.y, 
+            x:clampedX, y:clampedY, 
             vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, 
             v: xpVal / 3, // Split XP evenly across orbs
             color: "#00f2fe" // Always blue
@@ -2084,11 +2097,10 @@ function drawRoom() {
         ctx.restore(); // Restore translation
     }
 
-    // Draw snow particles (only in Zone 1)
-    if (depthIndex === 0) {
-        ctx.save();
-        ctx.globalAlpha = 0.7;
-        SNOW_PARTICLES.forEach(p => {
+    // Draw snow particles
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    SNOW_PARTICLES.forEach(p => {
             if (p.y < camera.y + canvas.height && p.y > camera.y - 50) { // Only draw visible particles
                 ctx.fillStyle = p.c;
                 ctx.beginPath();
@@ -2097,7 +2109,6 @@ function drawRoom() {
             }
         });
         ctx.restore();
-    }
 
     // Visuals
     visuals.forEach(v => {
@@ -2263,8 +2274,12 @@ function updatePlayerStat(stat, val) {
 function devSkipWave() {
     if(gameState !== "PLAY" || portal.active) return;
     enemies.forEach(e => {
+        // Clamp enemy position to map bounds to prevent XP orbs from spawning outside
+        const clampedX = Math.max(20, Math.min(ROOM_WIDTH - 20, e.x));
+        const clampedY = Math.max(20, Math.min(ROOM_HEIGHT - 20, e.y));
+        
         for(let i=0;i<3;i++) xpOrbs.push({ 
-            x:e.x, y:e.y, 
+            x:clampedX, y:clampedY, 
             vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, 
             v:(e.xpValue || (e.sides*5))/3,
             color: "#00f2fe"
@@ -2298,6 +2313,21 @@ function devUnlockAll() {
     player.hasMulti = true;
     updateSkillUI();
     addFloat("MODULES UNLOCKED", player.x, player.y, "#ff00de");
+}
+
+function devSetDepth(newDepth) {
+    if(gameState !== "PLAY") return;
+    
+    const depth = parseInt(newDepth);
+    if(isNaN(depth) || depth < 0 || depth > 6) {
+        addFloat("INVALID DEPTH (0-6)", player.x, player.y, "#ff2a6d");
+        return;
+    }
+    
+    enemies = [];
+    depthIndex = depth;
+    showZoneIntro();
+    addFloat(`DEPTH SET TO ${depth}`, player.x, player.y, "#00f2fe");
 }
 
 function devInstantLevel() {
