@@ -2789,8 +2789,8 @@ function devSkipWave() {
         for(let i=0;i<3;i++) xpOrbs.push({ 
             x:clampedX, y:clampedY, 
             vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, 
-            v:(e.xpValue || (e.sides*5))/3,
-            color: "#00f2fe"
+            v: (e.xpValue || (e.sides * e.sides) + (depthIndex * 20)) / 3, // Original XP calculation
+            color: "#00f2fe" // Always blue - original functionality
         });
     });
     enemies = [];
