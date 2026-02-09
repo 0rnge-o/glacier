@@ -565,6 +565,20 @@
         </div>
     </div>
 
+    <div id="answer-explanation-overlay" class="overlay hidden">
+        <div class="trivia-box">
+            <div style="color:#00f2fe; margin-bottom:10px; font-weight:900; letter-spacing:2px">ANSWER EXPLANATION</div>
+            <div class="t-status" id="answer-status"></div>
+            <div style="margin:20px 0; padding:15px; background:rgba(0,0,0,0.5); border:1px solid #444; border-radius:5px;">
+                <div style="color:#ffd700; font-weight:bold; margin-bottom:10px;">CORRECT ANSWER:</div>
+                <div id="correct-answer" style="color:#fff; font-size:18px; margin-bottom:15px;"></div>
+                <div style="color:#00ffaa; font-weight:bold; margin-bottom:10px;">EXPLANATION:</div>
+                <div id="answer-explanation" style="color:#ccc; line-height:1.5;"></div>
+            </div>
+            <button class="menu-btn" onclick="continueFromExplanation()">CONTINUE</button>
+        </div>
+    </div>
+
     <div id="glossary-tooltip"></div>
 
     <div id="upgrade-overlay" class="overlay hidden">
@@ -588,6 +602,7 @@ const screens = {
     hud: document.getElementById('hud'),
     upgrade: document.getElementById('upgrade-overlay'),
     trivia: document.getElementById('trivia-overlay'),
+    answerExplanation: document.getElementById('answer-explanation-overlay'),
     pause: document.getElementById('pause-screen'),
     learn: document.getElementById('learn-screen'),
     tutorial: document.getElementById('tutorial-screen'),
@@ -673,17 +688,17 @@ const DEPTH_NAMES = [
 
 // Zone descriptions for educational intros
 const ZONE_DESCRIPTIONS = [
-    `The <span style="color:#00f2fe">Zone of Accumulation</span> is where snowfall exceeds melting. Fresh snow compresses into firn and eventually glacial ice through pressure. This zone is characterized by positive mass balance and serves as the glacier's "fuel tank." The snowline marks the boundary between accumulation and ablation zones.`,
+    `The <span style="color:#00f2fe">Zone of Accumulation</span> is where snowfall exceeds melting. Fresh snow compresses into firn - intermediate-stage ice formed by pressure - and eventually glacial ice through pressure. This zone is characterized by positive mass balance and serves as the glacier's "fuel tank." The snowline marks the boundary between accumulation and ablation zones. Over decades, this compaction process transforms fluffy snow into dense blue ice that can flow under its own weight, creating the massive ice rivers we call glaciers.`,
     
-    `The <span style="color:#00f2fe">Equilibrium Line</span> represents the altitude where accumulation equals ablation annually. Below this line, the glacier loses mass; above it, gains mass. This dynamic balance point fluctuates with climate conditions and is critical for predicting glacier health and behavior.`,
+    `The <span style="color:#00f2fe">Equilibrium Line</span> represents the altitude where accumulation equals ablation annually. Below this line, the glacier loses mass; above it, gains mass. This dynamic balance point fluctuates with climate conditions and is critical for predicting glacier health and behavior. Scientists track this line carefully because its movement up or down indicates whether a glacier is growing or shrinking in response to climate change.`,
     
-    `<span style="color:#00f2fe">Crevasses</span> are deep fractures in glacial ice caused by tensile stress. They form when ice moves over uneven terrain or changes velocity. Despite appearances, crevasses rarely extend beyond 50 meters deep due to plastic ice flow under pressure. They're navigation hazards but important for studying internal glacier structure.`,
+    `<span style="color:#00f2fe">Crevasses</span> are deep fractures in glacial ice caused by tensile stress - pulling forces that stretch and crack the ice. They form when ice moves over uneven terrain or changes velocity. Despite appearances, crevasses rarely extend beyond 50 meters deep due to plastic ice flow under pressure. They're navigation hazards but important for studying internal glacier structure. Glaciologists use crevasse patterns to understand ice flow dynamics and stress distribution within the glacier.`,
     
-    `Glacial <span style="color:#00f2fe">Landforms</span> like cirques, aretes, and horns result from erosional processes. A cirque is an amphitheater-shaped basin carved by ice accumulation and rotational sliding. When multiple cirques converge, they create distinctive sharp ridges and pyramidal peaks that define alpine landscapes.`,
+    `Glacial <span style="color:#00f2fe">Landforms</span> like cirques, aretes, and horns result from erosional processes. A cirque is an amphitheater-shaped basin carved by ice accumulation and rotational sliding. When multiple cirques converge, they create distinctive sharp ridges and pyramidal peaks that define alpine landscapes. These features reveal the powerful erosive force of glaciers as they grind away rock like massive sheets of sandpaper, shaping mountains over thousands of years.`,
     
-    `The <span style="color:#00f2fe">Zone of Ablation</span> is where ice loss exceeds accumulation through melting, sublimation, and calving. Ablation processes include surface melt, basal melt from geothermal heat, and frontal ablation at glacier termini. This zone determines a glacier's net mass balance and retreat rate.`,
+    `The <span style="color:#00f2fe">Zone of Ablation</span> is where ice loss exceeds accumulation through melting, sublimation - direct ice-to-vapor transition, and calving - ice breaking off into water. Ablation processes include surface melt from solar radiation, basal melt from geothermal heat, and frontal ablation at glacier termini. This zone determines a glacier's net mass balance and retreat rate. The balance between accumulation and ablation zones ultimately controls whether glaciers advance, retreat, or remain stable.`,
     
-    `<span style="color:#00f2fe">Moraines</span> are accumulations of glacially transported debris. Terminal moraines mark maximum ice extent, lateral moraines form along glacier edges, and medial moraines result from merging glaciers. These deposits preserve climate history and influence post-glacial ecosystems.`
+    `<span style="color:#00f2fe">Moraines</span> are accumulations of glacially transported debris. Terminal moraines mark maximum ice extent, lateral moraines form along glacier edges, and medial moraines result from merging glaciers. These deposits preserve climate history and influence post-glacial ecosystems. Each moraine tells a story about the glacier's past extent and the types of rock it encountered during its journey.`
 ];
 
 // STATE
@@ -715,6 +730,7 @@ let triviaAnswered = false;
 let triviaLocked = false; // NEW: Prevent multiple answer clicks
 let nextLevelIsModule = false; // When true, next level-up shows module pick (after wrong on module level)
 let introKeysHeldWhenShown = {}; // Keys that were held when zone intro appeared; continue only on different key or click
+let currentTriviaQuestion = null; // Store current question for explanation screen
 
 // TIME & FPS
 let lastTime = 0;
@@ -855,6 +871,7 @@ const triviaQuestions = [
             "Snow density in the accumulation zone increased",
             "Surface albedo has significantly increased"
         ],
+        explanation: "When meltwater reaches the glacier bed, it acts as a lubricant, reducing basal friction and allowing the glacier to slide faster. This is a primary mechanism for glacier acceleration and can occur even without temperature changes if meltwater production increases due to other factors like rainfall or reduced surface albedo.",
         tags: ["general"]
     },
     {
@@ -866,6 +883,7 @@ const triviaQuestions = [
             "Their crevasse patterns are different",
             "The thickness of their firn layers"
         ],
+        explanation: "Glacier mass balance depends on the difference between accumulation (snowfall) and ablation (melting, sublimation, calving). Even with equal snowfall, differences in ablation due to factors like temperature, solar radiation exposure, altitude, or debris cover can cause one glacier to grow while another shrinks.",
         tags: ["general"]
     },
     {
@@ -877,6 +895,7 @@ const triviaQuestions = [
             "The glacier has begun calving icebergs",
             "Surface debris has thickened significantly"
         ],
+        explanation: "The equilibrium line marks the boundary between accumulation (where snowfall exceeds melting) and ablation zones. When this line moves downslope to lower elevations, it means a larger area of the glacier is experiencing net mass gain, indicating an expanded accumulation zone.",
         tags: ["accum"]
     },
     {
@@ -888,6 +907,7 @@ const triviaQuestions = [
             "More extensive terminal moraine growth",
             "Deeper crevasse formation"
         ],
+        explanation: "Firn is intermediate-stage snow that has survived at least one melt season. During colder summers, less melting occurs, allowing more snow to accumulate and compress into firn. This happens before other effects like increased flow velocity or moraine growth, which take longer to develop.",
         tags: ["accum"]
     },
     {
@@ -899,6 +919,7 @@ const triviaQuestions = [
             "Ice flow velocity reaches its maximum",
             "Moraine sediment becomes better sorted"
         ],
+        explanation: "When the equilibrium line rises, it means the area where accumulation equals ablation is moving upslope. This indicates that a larger portion of the glacier is experiencing net melting (ablation zone expansion), leading to increased overall mass loss and glacier retreat over time.",
         tags: ["eq"]
     },
     {
@@ -910,6 +931,7 @@ const triviaQuestions = [
             "Exceptionally low ice density",
             "Very steep valley walls"
         ],
+        explanation: "Glacier stability depends on the balance between accumulation and ablation. Even with warm summers causing high melting, exceptionally high winter snowfall can compensate by adding enough mass to maintain equilibrium. This demonstrates how increased precipitation can offset temperature effects.",
         tags: ["eq"]
     },
     {
@@ -921,6 +943,7 @@ const triviaQuestions = [
             "Overall flow velocity decreases",
             "Firn compacts into ice more rapidly"
         ],
+        explanation: "When ice flows over steeper terrain, it accelerates and experiences tensile stress (pulling forces). This stress stretches and cracks the ice, forming crevasses. Steeper slopes increase flow velocity and stress, making crevasse formation more likely and extensive.",
         tags: ["crev"]
     },
     {
@@ -932,6 +955,7 @@ const triviaQuestions = [
             "Temperature increases with depth, making ice ductile",
             "Rock debris naturally fills the fractures"
         ],
+        explanation: "At depths below about 50 meters, the overlying ice pressure is sufficient to make ice behave plastically (like a very thick fluid) rather than brittle. This plastic flow allows the ice to deform and close fractures rather than maintaining open cracks, limiting crevasse depth.",
         tags: ["crev"]
     },
     {
@@ -943,6 +967,7 @@ const triviaQuestions = [
             "A braided river system",
             "A broad floodplain"
         ],
+        explanation: "U-shaped valleys are distinctive landforms created by glacial erosion, where wide, steep-sided valleys replace the original V-shaped river valleys. This transformation requires thousands of years of ice flow and is definitive evidence of long-term glacial activity, unlike other features that can form through non-glacial processes.",
         tags: ["land"]
     },
     {
@@ -954,6 +979,7 @@ const triviaQuestions = [
             "A debris fan formation",
             "A meltwater channel network"
         ],
+        explanation: "When cirques (bowl-shaped basins carved by glaciers) erode backward from opposite sides of a mountain ridge, they leave a sharp, narrow ridge between them. This ridge is called an arête and is a classic glacial erosional feature formed by the headward erosion of adjacent glaciers.",
         tags: ["land"]
     },
     {
@@ -965,6 +991,7 @@ const triviaQuestions = [
             "Basal freezing adding ice at the bottom",
             "Firn compaction reducing volume"
         ],
+        explanation: "Sublimation is the process where ice transforms directly into water vapor without melting first. This can occur even in below-freezing temperatures, especially in dry, windy conditions or under intense solar radiation. It's a significant ablation process that can cause mass loss without any melting.",
         tags: ["abl"]
     },
     {
@@ -976,6 +1003,7 @@ const triviaQuestions = [
             "Steeper slopes in accumulation zone",
             "Lower overall ice density"
         ],
+        explanation: "The duration of the melt season is the most critical factor for ablation because it determines how long melting conditions persist. A longer melt season means more days with temperatures above freezing, more solar radiation exposure, and more time for melting, sublimation, and other ablation processes to occur.",
         tags: ["abl"]
     },
     {
@@ -987,6 +1015,7 @@ const triviaQuestions = [
             "Wind deposition and sorting",
             "Multiple freeze-thaw cycles"
         ],
+        explanation: "Glaciers transport sediment of all sizes together, from fine clay to house-sized boulders, without sorting by size. This unsorted mixture (called till) is characteristic of direct ice deposition. In contrast, water and wind typically sort sediments by size and density, creating layered deposits.",
         tags: ["mor"]
     },
     {
@@ -998,6 +1027,7 @@ const triviaQuestions = [
             "The zone of maximum flow velocity",
             "The accumulation zone maximum"
         ],
+        explanation: "Terminal moraines form at a glacier's terminus when the ice margin remains stable for an extended period, allowing debris to accumulate in a ridge. When the glacier retreats, this ridge marks the furthest extent of the ice, providing a record of the glacier's maximum position.",
         tags: ["mor"]
     }
 ];
@@ -1326,18 +1356,7 @@ function buildZoneBrief(idx) {
 
     if (answers.length === 0) return basePara;
 
-    const chunks = [];
-    const targetParas = answers.length > 12 ? 3 : (answers.length > 6 ? 2 : 1);
-    const chunkSize = Math.ceil(answers.length / targetParas);
-    for (let i = 0; i < answers.length; i += chunkSize) chunks.push(answers.slice(i, i + chunkSize));
-
-    const factParas = chunks.slice(0, 3).map((group, i) => {
-        const label = (i === 0) ? 'Key ideas for this zone:' : (i === 1) ? 'More to remember:' : 'Final notes:';
-        const body = group.map(toSentence).join(' ');
-        return `<p><span style="color:#00ffaa; font-weight:900; letter-spacing:1px;">${label}</span> ${body}</p>`;
-    }).join('');
-
-    return basePara + factParas;
+    return basePara;
 }
 
 function handleIntroContinue(e) {
@@ -1575,6 +1594,7 @@ function startTrivia() {
     
     let q = pool[Math.floor(Math.random()*pool.length)];
     askedQuestions.push(q.id);
+    currentTriviaQuestion = q; // Store current question for explanation screen
 
     // Format question with line breaks for readability
     let formattedQ = q.q;
@@ -1624,30 +1644,12 @@ function checkAnswer(isCorrect, clickedBtn) {
         clickedBtn.style.backgroundColor = "#00ffaa";
         clickedBtn.style.color = "#000";
         clickedBtn.style.borderColor = "#00ffaa";
-        
-        setTimeout(() => {
-            screens.trivia.classList.add('hidden');
-            
-            // Check for Module Unlock every 4 levels
-            const unacquired = abilitiesDB.filter(a => {
-                if(a.id==='shock' && player.hasShock) return false;
-                if(a.id==='mag' && player.hasMag) return false;
-                if(a.id==='multi' && player.hasMulti) return false;
-                if(a.id==='shield' && player.hasShield) return false;
-                return true;
-            });
-
-            if(player.lvl % 4 === 0 && unacquired.length > 0) triggerUnlock(unacquired);
-            else triggerUpgrade();
-            
-        }, 800);
     } else {
         document.getElementById('t-status').innerText = "INCORRECT";
         document.getElementById('t-status').style.color = "#ff2a6d";
         clickedBtn.style.backgroundColor = "#ff2a6d";
         clickedBtn.style.color = "#000";
         clickedBtn.style.borderColor = "#ff2a6d";
-        
         shake(10);
         // Wrong on a level that would have been module (every 4 levels): next level-up = module
         const unacquired = abilitiesDB.filter(a => {
@@ -1658,13 +1660,70 @@ function checkAnswer(isCorrect, clickedBtn) {
             return true;
         });
         if(player.lvl % 4 === 0 && unacquired.length > 0) nextLevelIsModule = true;
+    }
 
-        setTimeout(() => {
-            screens.trivia.classList.add('hidden');
-            aimModeLockUntil = Date.now() + 250; // Preserve arrow-key aim when exiting trivia
-            gameState = "PLAY";
-            lastTime = performance.now(); // Reset time to avoid physics jump
-        }, 1500);
+    // Show explanation screen after a short delay
+    setTimeout(() => {
+        showAnswerExplanation(isCorrect);
+    }, 1500);
+}
+
+function showAnswerExplanation(isCorrect) {
+    if (!currentTriviaQuestion) return;
+    
+    // Pause the game
+    gameState = "EXPLANATION";
+    
+    // Hide trivia screen and show explanation screen
+    screens.trivia.classList.add('hidden');
+    screens.answerExplanation.classList.remove('hidden');
+    
+    // Set status
+    const statusEl = document.getElementById('answer-status');
+    if (isCorrect) {
+        statusEl.innerText = "CORRECT!";
+        statusEl.style.color = "#00ffaa";
+    } else {
+        statusEl.innerText = "INCORRECT";
+        statusEl.style.color = "#ff2a6d";
+    }
+    
+    // Set correct answer
+    const correctAnswerEl = document.getElementById('correct-answer');
+    correctAnswerEl.innerText = currentTriviaQuestion.a[0];
+    
+    // Set explanation
+    const explanationEl = document.getElementById('answer-explanation');
+    explanationEl.innerText = currentTriviaQuestion.explanation;
+    
+    // Apply glossary to explanation content
+    applyGlossaryToElement(correctAnswerEl);
+    applyGlossaryToElement(explanationEl);
+}
+
+function continueFromExplanation() {
+    screens.answerExplanation.classList.add('hidden');
+    
+    // Continue with the appropriate flow based on whether answer was correct
+    const wasCorrect = document.getElementById('answer-status').innerText === "CORRECT!";
+    
+    if (wasCorrect) {
+        // Check for Module Unlock every 4 levels
+        const unacquired = abilitiesDB.filter(a => {
+            if(a.id==='shock' && player.hasShock) return false;
+            if(a.id==='mag' && player.hasMag) return false;
+            if(a.id==='multi' && player.hasMulti) return false;
+            if(a.id==='shield' && player.hasShield) return false;
+            return true;
+        });
+
+        if(player.lvl % 4 === 0 && unacquired.length > 0) triggerUnlock(unacquired);
+        else triggerUpgrade();
+    } else {
+        // Wrong answer - return to game
+        aimModeLockUntil = Date.now() + 250; // Preserve arrow-key aim when exiting trivia
+        gameState = "PLAY";
+        lastTime = performance.now(); // Reset time to avoid physics jump
     }
 }
 
@@ -1801,14 +1860,14 @@ function loop(timestamp) {
     // DEV TOOL HOOK: UPDATE LOOP
     if(window.devUpdate) window.devUpdate();
     
-    if(gameState === "MENU" || gameState === "WIN" || gameState === "INTRO") { 
+    if(gameState === "MENU" || gameState === "WIN" || gameState === "INTRO" || gameState === "EXPLANATION") { 
         renderBackground(); 
-        if (gameSettings.mouseType === 'circle' && (gameState === "INTRO" || gameState === "MENU")) {
+        if (gameSettings.mouseType === 'circle' && (gameState === "INTRO" || gameState === "MENU" || gameState === "EXPLANATION")) {
             drawCustomCursor();
         }
         return; 
     }
-    if(gameState !== "PLAY") return; // PAUSE EVERYTHING ELSE
+    if(gameState !== "PLAY" && gameState !== "UPGRADE") return; // PAUSE EVERYTHING EXCEPT UPGRADE
     
     update(dt);
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -1970,18 +2029,23 @@ function update(dt) {
     // Update quality based on enemy count
     updateQualityLevel();
     
-    // Always update snow particles
+    // Always update snow particles (even in menus for visual effect)
     updateSnowParticles(dt);
+    
+    // Pause game if not in PLAY state (allow UPGRADE to update)
+    if(gameState !== "PLAY" && gameState !== "UPGRADE") return;
     
     mouse.wx = mouse.x + camera.x; mouse.wy = mouse.y + camera.y;
 
-    // Movement (Scaled by DT)
-    if(keys.w) player.y-=player.spd * dt;
-    if(keys.s) player.y+=player.spd * dt;
-    if(keys.a) player.x-=player.spd * dt;
-    if(keys.d) player.x+=player.spd * dt;
-    if(player.x < 30) player.x = 30; if(player.x > ROOM_WIDTH-30) player.x = ROOM_WIDTH-30;
-    if(player.y < 30) player.y = 30; if(player.y > ROOM_HEIGHT-30) player.y = ROOM_HEIGHT-30;
+    // Movement (Scaled by DT) - Only allow movement in PLAY state
+    if(gameState === "PLAY") {
+        if(keys.w) player.y-=player.spd * dt;
+        if(keys.s) player.y+=player.spd * dt;
+        if(keys.a) player.x-=player.spd * dt;
+        if(keys.d) player.x+=player.spd * dt;
+        if(player.x < 30) player.x = 30; if(player.x > ROOM_WIDTH-30) player.x = ROOM_WIDTH-30;
+        if(player.y < 30) player.y = 30; if(player.y > ROOM_HEIGHT-30) player.y = ROOM_HEIGHT-30;
+    }
 
     // PORTAL INTERACTION
     if(portal.active) {
@@ -2535,6 +2599,9 @@ function drawRoom() {
         ctx.closePath(); ctx.stroke(); ctx.restore(); ctx.shadowBlur=0;
     });
     ctx.globalCompositeOperation = 'source-over';
+    
+    // Reset fillStyle to ensure XP orbs render correctly
+    ctx.fillStyle = "#00f2fe";
 
     // Player (No dot) - use aim angle (arrow keys or mouse)
     const drawAngle = (typeof player.aimAngle === 'number') ? player.aimAngle : Math.atan2(mouse.wy - player.y, mouse.wx - player.x);
