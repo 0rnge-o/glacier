@@ -10,7 +10,7 @@
         body { margin: 0; overflow: hidden; background: #020205; font-family: 'Montserrat', sans-serif; user-select: none; touch-action: none; }
 
         #game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-        canvas { display: block; max-width: 100vw; max-height: 100vh; touch-action: none; image-rendering: crisp-edges; image-rendering: pixelated; }
+        canvas { display: block; width: 100%; height: 100%; object-fit: contain; touch-action: none; image-rendering: crisp-edges; image-rendering: pixelated; }
 
         /* Responsive scaling */
         @media (max-width: 768px) {
@@ -563,7 +563,7 @@
     </div>
 
     <div id="death-screen" class="overlay hidden">
-        <h1 style="color: #ff2a6d;">HULL CRITICAL</h1>
+        <h1 style="color: #ff2a6d;">run over</h1>
         <h2 id="final-score"></h2>
         <div id="death-time" style="color: #00f2fe; margin-bottom: 30px; font-size: 20px; font-weight: bold;">Time: 00:00</div>
         <button class="menu-btn" onclick="startGame()">REBOOT</button>
@@ -2401,7 +2401,7 @@ function update(dt) {
                     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                     
                     hideAll(); screens.death.classList.remove('hidden'); 
-                    document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
+                    document.getElementById('final-score').innerText = `ENDED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
                     document.getElementById('death-time').innerText = `Time: ${timeString}`;
                 }
             } else {
@@ -2420,7 +2420,7 @@ function update(dt) {
                     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                     
                     hideAll(); screens.death.classList.remove('hidden'); 
-                    document.getElementById('final-score').innerText = `DIED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
+                    document.getElementById('final-score').innerText = `ENDED IN ${DEPTH_NAMES[depthIndex]} - WAVE ${wave}`; 
                     document.getElementById('death-time').innerText = `Time: ${timeString}`;
                 }
             }
@@ -2820,7 +2820,7 @@ function devSkipWave() {
         for(let i=0;i<3;i++) xpOrbs.push({ 
             x:clampedX, y:clampedY, 
             vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, 
-            v: (e.xpValue || (e.sides * e.sides) + (depthIndex * 20)) / 3, // Original XP calculation
+            v: 10, // Fixed XP value for all orbs
             color: "#00f2fe" // Always blue - original functionality
         });
     });
