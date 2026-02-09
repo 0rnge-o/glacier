@@ -688,17 +688,29 @@ const DEPTH_NAMES = [
 
 // Zone descriptions for educational intros
 const ZONE_DESCRIPTIONS = [
-    `The <span style="color:#00f2fe">Zone of Accumulation</span> is where snowfall exceeds melting. Fresh snow compresses into firn - intermediate-stage ice formed by pressure - and eventually glacial ice through pressure. This zone is characterized by positive mass balance and serves as the glacier's "fuel tank." The snowline marks the boundary between accumulation and ablation zones. Over decades, this compaction process transforms fluffy snow into dense blue ice that can flow under its own weight, creating the massive ice rivers we call glaciers.`,
+    `The <span style="color:#00f2fe">Zone of Accumulation</span> is where snowfall exceeds melting. Fresh snow compresses into firn - intermediate-stage ice formed by pressure - and eventually glacial ice through pressure. This zone is characterized by positive mass balance and serves as the glacier's "fuel tank." The snowline marks the boundary between accumulation and ablation zones. Over decades, this compaction process transforms fluffy snow into dense blue ice that can flow under its own weight, creating the massive ice rivers we call glaciers. 
     
-    `The <span style="color:#00f2fe">Equilibrium Line</span> represents the altitude where accumulation equals ablation annually. Below this line, the glacier loses mass; above it, gains mass. This dynamic balance point fluctuates with climate conditions and is critical for predicting glacier health and behavior. Scientists track this line carefully because its movement up or down indicates whether a glacier is growing or shrinking in response to climate change.`,
+    <span style="color:#ff9900">Climate Impact:</span> Rising temperatures are pushing the snowline to higher altitudes, shrinking accumulation zones worldwide. This reduces the glacier's "fuel tank" and threatens long-term ice survival. Many glaciers now have accumulation zones too small to sustain their mass, leading to inevitable retreat.`,
     
-    `<span style="color:#00f2fe">Crevasses</span> are deep fractures in glacial ice caused by tensile stress - pulling forces that stretch and crack the ice. They form when ice moves over uneven terrain or changes velocity. Despite appearances, crevasses rarely extend beyond 50 meters deep due to plastic ice flow under pressure. They're navigation hazards but important for studying internal glacier structure. Glaciologists use crevasse patterns to understand ice flow dynamics and stress distribution within the glacier.`,
+    `The <span style="color:#00f2fe">Equilibrium Line</span> represents the altitude where accumulation equals ablation annually. Below this line, the glacier loses mass; above it, gains mass. This dynamic balance point fluctuates with climate conditions and is critical for predicting glacier health and behavior. Scientists track this line carefully because its movement up or down indicates whether a glacier is growing or shrinking in response to climate change.
     
-    `Glacial <span style="color:#00f2fe">Landforms</span> like cirques, aretes, and horns result from erosional processes. A cirque is an amphitheater-shaped basin carved by ice accumulation and rotational sliding. When multiple cirques converge, they create distinctive sharp ridges and pyramidal peaks that define alpine landscapes. These features reveal the powerful erosive force of glaciers as they grind away rock like massive sheets of sandpaper, shaping mountains over thousands of years.`,
+    <span style="color:#ff9900">Climate Impact:</span> The equilibrium line is rising globally as temperatures warm. When it rises above the glacier's highest point, the entire glacier enters the ablation zone and begins irreversible retreat. This upward migration is one of the clearest indicators of climate change impacts on ice systems.`,
     
-    `The <span style="color:#00f2fe">Zone of Ablation</span> is where ice loss exceeds accumulation through melting, sublimation - direct ice-to-vapor transition, and calving - ice breaking off into water. Ablation processes include surface melt from solar radiation, basal melt from geothermal heat, and frontal ablation at glacier termini. This zone determines a glacier's net mass balance and retreat rate. The balance between accumulation and ablation zones ultimately controls whether glaciers advance, retreat, or remain stable.`,
+    `<span style="color:#00f2fe">Crevasses</span> are deep fractures in glacial ice caused by tensile stress - pulling forces that stretch and crack the ice. They form when ice moves over uneven terrain or changes velocity. Despite appearances, crevasses rarely extend beyond 50 meters deep due to plastic ice flow under pressure. They're navigation hazards but important for studying internal glacier structure. Glaciologists use crevasse patterns to understand ice flow dynamics and stress distribution within the glacier.
     
-    `<span style="color:#00f2fe">Moraines</span> are accumulations of glacially transported debris. Terminal moraines mark maximum ice extent, lateral moraines form along glacier edges, and medial moraines result from merging glaciers. These deposits preserve climate history and influence post-glacial ecosystems. Each moraine tells a story about the glacier's past extent and the types of rock it encountered during its journey.`
+    <span style="color:#ff9900">Climate Impact:</span> Warmer temperatures increase meltwater production, which can both lubricate glacier beds (increasing flow and crevasse formation) and cause surface collapse. More variable flow patterns create complex crevasse networks that make glacier travel increasingly dangerous.`,
+    
+    `Glacial <span style="color:#00f2fe">Landforms</span> like cirques, aretes, and horns result from erosional processes. A cirque is an amphitheater-shaped basin carved by ice accumulation and rotational sliding. When multiple cirques converge, they create distinctive sharp ridges and pyramidal peaks that define alpine landscapes. These features reveal the powerful erosive force of glaciers as they grind away rock like massive sheets of sandpaper, shaping mountains over thousands of years.
+    
+    <span style="color:#ff9900">Climate Impact:</span> As glaciers retreat, they expose newly carved landscapes that haven't seen sunlight for thousands of years. This creates new ecosystems but also destabilizes slopes, increasing rockfall and landslide risks in recently deglaciated areas.`,
+    
+    `The <span style="color:#00f2fe">Zone of Ablation</span> is where ice loss exceeds accumulation through melting, sublimation - direct ice-to-vapor transition, and calving - ice breaking off into water. Ablation processes include surface melt from solar radiation, basal melt from geothermal heat, and frontal ablation at glacier termini. This zone determines a glacier's net mass balance and retreat rate. The balance between accumulation and ablation zones ultimately controls whether glaciers advance, retreat, or remain stable.
+    
+    <span style="color:#ff9900">Climate Impact:</span> Ablation zones are expanding dramatically worldwide. Longer melt seasons, reduced snow cover, and higher temperatures are accelerating ice loss. This expansion contributes to sea level rise and threatens freshwater supplies for downstream communities.`,
+    
+    `<span style="color:#00f2fe">Moraines</span> are accumulations of glacially transported debris. Terminal moraines mark maximum ice extent, lateral moraines form along glacier edges, and medial moraines result from merging glaciers. These deposits preserve climate history and influence post-glacial ecosystems. Each moraine tells a story about the glacier's past extent and the types of rock it encountered during its journey.
+    
+    <span style="color:#ff9900">Climate Impact:</span> Modern glaciers are retreating past ancient moraines, revealing landscapes not seen in over 11,000 years since the last ice age. This retreat is creating new lakes behind unstable moraine dams, posing flood risks to downstream communities.`
 ];
 
 // STATE
@@ -764,9 +776,17 @@ const glossary = {
 const glossaryTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
 const glossaryRegex = new RegExp(`\\b(${glossaryTerms.map(t => t.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
 
-const GENERAL_ARCHIVE_BLURB = `Glaciers grow or shrink based on <span style="color:#00f2fe">mass balance</span>: the difference between <span style="color:#00f2fe">accumulation</span> (snow gain) and <span style="color:#00f2fe">ablation</span> (ice loss). Flow speed is controlled by ice deformation and <span style="color:#00f2fe">basal sliding</span>, which can increase when <span style="color:#00f2fe">meltwater</span> reduces <span style="color:#00f2fe">basal friction</span>. Many surface clues (like the <span style="color:#00f2fe">equilibrium line</span>, crevasse patterns, and moraine deposits) reveal how a glacier is responding to climate and terrain. 
+const GENERAL_ARCHIVE_BLURB = `<p><span style="color:#00f2fe">How Glaciers Work:</span> Glaciers are massive rivers of ice that form when snow accumulates over many years and compresses into ice. They flow slowly downhill under their own weight, like very thick honey. Glaciers grow when more snow falls than melts, and shrink when melting exceeds snowfall.</p>
 
-<span style="color:#ff9900">Climate Change Impact:</span> Rising global temperatures are causing glaciers worldwide to retreat at unprecedented rates. This retreat contributes to <span style="color:#00f2fe">sea level rise</span> as meltwater flows to oceans, affects freshwater availability for millions who depend on glacial melt, and can trigger <span style="color:#00f2fe">glacial lake outburst floods</span> (GLOFs) when unstable moraine dams fail. Scientists monitor glacier mass balance using satellite imagery and field measurements to understand climate change impacts and predict future changes in water resources and sea level.`;
+<p><span style="color:#00f2fe">Glacier Movement:</span> Ice moves in two main ways. The ice itself deforms and flows internally, especially under pressure. The glacier can also slide over its bed if there's meltwater lubricating the bottom. This combination creates the slow but steady movement we see in glaciers.</p>
+
+<p><span style="color:#00f2fe">Seasonal Changes:</span> Glaciers have seasons just like weather. In winter, they gain snow and grow. In summer, they melt and shrink. The key is whether they gain more than they lose over the entire year. This yearly balance determines if a glacier is healthy or shrinking.</p>
+
+<p><span style="color:#00f2fe">Reading the Ice:</span> Scientists can read glacier history like a book. The equilibrium line shows where melting equals accumulation. Crevasses reveal stress patterns. Moraines are piles of debris that mark where glaciers once reached. Each feature tells part of the glacier's story.</p>
+
+<p><span style="color:#ff9900">Climate Change Connection:</span> Rising global temperatures are disrupting the natural balance of glaciers worldwide. Warmer air means more melting and less snow accumulation. This causes glaciers to retreat, contributing to sea level rise and threatening water supplies for millions of people who depend on glacial meltwater.</p>
+
+<p><span style="color:#00f2fe">Why It Matters:</span> Glaciers are like water towers, storing winter snow and releasing it slowly during summer. They provide drinking water, irrigation, and hydroelectric power. As glaciers disappear, rivers may flood in spring then run dry in summer, creating serious challenges for communities and ecosystems.</p>`;
 
 function applyGlossaryToElement(el) {
     if (!el) return;
@@ -1227,33 +1247,43 @@ function renderArchive() {
 
     const zoneTags = ['accum', 'eq', 'crev', 'land', 'abl', 'mor'];
 
-    const buildTakeawaysHtml = (tag) => {
-        const qs = triviaQuestions.filter(q => q.tags && q.tags.includes(tag));
-        if (qs.length === 0) return "";
-        const unique = [...new Set(qs.map(q => (q.a && q.a[0]) ? q.a[0] : "").filter(Boolean))];
-        if (unique.length === 0) return "";
-        return `<div style="margin-top:14px; color:#00ffaa; font-weight:900; letter-spacing:1px;">KEY ANSWERS</div><ul>${unique.map(a => `<li>${a}</li>`).join('')}</ul>`;
-    };
-
     const sections = [];
     for (let i = 0; i < DEPTH_NAMES.length; i++) {
         const tag = zoneTags[i];
         const zoneTitle = `ZONE ${i + 1}: ${DEPTH_NAMES[i]}`;
         const desc = ZONE_DESCRIPTIONS[i] || "";
-        const takeaways = tag ? buildTakeawaysHtml(tag) : "";
         sections.push(`
             <div class="archive-section">
                 <div class="archive-section-title">${zoneTitle}</div>
-                <div class="archive-section-body">${desc}${takeaways}</div>
+                <div class="archive-section-body">${desc}</div>
             </div>
         `);
     }
 
-    const generalTakeaways = buildTakeawaysHtml('general');
+    // Climate Change Section
+    sections.push(`
+        <div class="archive-section">
+            <div class="archive-section-title">CLIMATE CHANGE IMPACTS</div>
+            <div class="archive-section-body">
+                <p><span style="color:#ff9900">Rising Temperatures:</span> Global warming is causing glaciers to melt faster than they can accumulate new snow. This imbalance is causing glaciers worldwide to shrink and retreat.</p>
+                
+                <p><span style="color:#ff9900">Sea Level Rise:</span> As glaciers melt, water flows into oceans, causing sea levels to rise. This threatens coastal communities and ecosystems around the world.</p>
+                
+                <p><span style="color:#ff9900">Water Scarcity:</span> Over 1.5 billion people depend on glacial meltwater for drinking water, farming, and electricity. As glaciers disappear, these communities face water shortages.</p>
+                
+                <p><span style="color:#ff9900">Natural Hazards:</span> Retreating glaciers create unstable lakes behind moraine dams. These can burst suddenly, causing devastating floods in mountain valleys.</p>
+                
+                <p><span style="color:#ff9900">Ecosystem Changes:</span> Glacial retreat exposes land that hasn't seen sunlight for thousands of years, creating new habitats but also disrupting existing ecosystems.</p>
+                
+                <p><span style="color:#ff9900">What We Can Do:</span> Reducing greenhouse gas emissions, protecting glacier environments, and monitoring changes can help slow glacier loss and prepare communities for impacts.</p>
+            </div>
+        </div>
+    `);
+
     sections.push(`
         <div class="archive-section">
             <div class="archive-section-title">GENERAL KNOWLEDGE</div>
-            <div class="archive-section-body">${GENERAL_ARCHIVE_BLURB}${generalTakeaways}</div>
+            <div class="archive-section-body">${GENERAL_ARCHIVE_BLURB}</div>
         </div>
     `);
 
