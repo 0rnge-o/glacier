@@ -764,7 +764,9 @@ const glossary = {
 const glossaryTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
 const glossaryRegex = new RegExp(`\\b(${glossaryTerms.map(t => t.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')).join('|')})\\b`, 'gi');
 
-const GENERAL_ARCHIVE_BLURB = `Glaciers grow or shrink based on <span style="color:#00f2fe">mass balance</span>: the difference between <span style="color:#00f2fe">accumulation</span> (snow gain) and <span style="color:#00f2fe">ablation</span> (ice loss). Flow speed is controlled by ice deformation and <span style="color:#00f2fe">basal sliding</span>, which can increase when <span style="color:#00f2fe">meltwater</span> reduces <span style="color:#00f2fe">basal friction</span>. Many surface clues (like the <span style="color:#00f2fe">equilibrium line</span>, crevasse patterns, and moraine deposits) reveal how a glacier is responding to climate and terrain.`;
+const GENERAL_ARCHIVE_BLURB = `Glaciers grow or shrink based on <span style="color:#00f2fe">mass balance</span>: the difference between <span style="color:#00f2fe">accumulation</span> (snow gain) and <span style="color:#00f2fe">ablation</span> (ice loss). Flow speed is controlled by ice deformation and <span style="color:#00f2fe">basal sliding</span>, which can increase when <span style="color:#00f2fe">meltwater</span> reduces <span style="color:#00f2fe">basal friction</span>. Many surface clues (like the <span style="color:#00f2fe">equilibrium line</span>, crevasse patterns, and moraine deposits) reveal how a glacier is responding to climate and terrain. 
+
+<span style="color:#ff9900">Climate Change Impact:</span> Rising global temperatures are causing glaciers worldwide to retreat at unprecedented rates. This retreat contributes to <span style="color:#00f2fe">sea level rise</span> as meltwater flows to oceans, affects freshwater availability for millions who depend on glacial melt, and can trigger <span style="color:#00f2fe">glacial lake outburst floods</span> (GLOFs) when unstable moraine dams fail. Scientists monitor glacier mass balance using satellite imagery and field measurements to understand climate change impacts and predict future changes in water resources and sea level.`;
 
 function applyGlossaryToElement(el) {
     if (!el) return;
@@ -1029,6 +1031,54 @@ const triviaQuestions = [
         ],
         explanation: "Terminal moraines form at a glacier's terminus when the ice margin remains stable for an extended period, allowing debris to accumulate in a ridge. When the glacier retreats, this ridge marks the furthest extent of the ice, providing a record of the glacier's maximum position.",
         tags: ["mor"]
+    },
+    {
+        id: 15,
+        q: "How much has global sea level risen due to glacier melt since 1990?",
+        a: ["Approximately 2 centimeters per decade"],
+        d: [
+            "Less than 0.5 centimeters per decade",
+            "Over 5 centimeters per decade",
+            "Sea level has actually decreased"
+        ],
+        explanation: "Since 1990, glaciers and ice caps have contributed roughly 2 centimeters per decade to global sea level rise. While this may seem small, it represents a massive volume of ice melt and is accelerating as global temperatures continue to rise.",
+        tags: ["general"]
+    },
+    {
+        id: 16,
+        q: "What percentage of the world's population depends on glacial meltwater for freshwater?",
+        a: ["About 15-20% (roughly 1.5 billion people)"],
+        d: [
+            "Less than 5%",
+            "About 50%",
+            "Nearly 80%"
+        ],
+        explanation: "Approximately 1.5 billion people, or 15-20% of the global population, rely on glacial meltwater for drinking water, agriculture, and hydroelectric power. Major river systems in Asia (Indus, Ganges, Brahmaputra) depend heavily on Himalayan glaciers.",
+        tags: ["general"]
+    },
+    {
+        id: 17,
+        q: "What is the primary cause of accelerated glacier retreat in the 21st century?",
+        a: "Rising global air temperatures",
+        d: [
+            "Increased volcanic activity",
+            "Changes in Earth's orbit",
+            "Reduced snowfall precipitation"
+        ],
+        explanation: "The primary driver of accelerated glacier retreat is rising global air temperatures due to greenhouse gas emissions. While other factors like precipitation changes play a role, temperature increase is the dominant factor causing more melting and reduced accumulation.",
+        tags: ["general"]
+    },
+    {
+        id: 18,
+        q: "Which region has lost the most glacier ice mass since 2000?",
+        a: ["Alaska and surrounding regions"],
+        d: [
+            "The European Alps",
+            "Greenland ice sheet",
+            "Himalayan glaciers"
+        ],
+        explanation: "Alaska has experienced the largest mass loss of any glacier region, losing over 75 gigatons of ice annually. This is due to its location in a warming Arctic where temperatures are rising faster than the global average.",
+        tags: ["general"]
     }
 ];
  
@@ -2379,8 +2429,8 @@ function killEnemy(e, index) {
     
     // Don't drop XP for mini enemies
     if(e.type === 'mini') {
-        // Death particles in enemy color only
-        for(let k=0; k<3; k++) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:30, c:e.color, s:5});
+        // Death particles in enemy color only (smaller and shorter)
+        for(let k=0; k<3; k++) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:15, c:e.color, s:2});
         return;
     }
     
@@ -2404,7 +2454,7 @@ function killEnemy(e, index) {
     // Death particles in enemy color (reduced for mini enemies and quality)
     const baseParticleCount = e.type === 'mini' ? 2 : 6;
     const particleCount = Math.floor(baseParticleCount * qualityLevel);
-    for(let k=0; k<particleCount; k++) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:30, c:e.color, s:5});
+    for(let k=0; k<particleCount; k++) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:15, c:e.color, s:2});
     
     // Spawn mini versions for shapes with 6+ sides (50% chance)
     if(e.sides >= 6 && e.type === 'normal' && Math.random() < 0.5) {
@@ -2467,18 +2517,6 @@ function drawRoom() {
 
     ctx.fillStyle = "#020205"; ctx.fillRect(viewBounds.left, viewBounds.top, viewBounds.right - viewBounds.left, viewBounds.bottom - viewBounds.top);
     ctx.fillStyle = pal.bg; ctx.fillRect(0,0,ROOM_WIDTH, ROOM_HEIGHT);
-
-    // Only draw grid lines that intersect the visible view (clamp to room bounds)
-    ctx.strokeStyle=pal.grid; ctx.lineWidth=2;
-    ctx.beginPath();
-    const gridStep = 100;
-    const xStart = Math.max(0, Math.floor(viewBounds.left / gridStep) * gridStep);
-    const xEnd = Math.min(ROOM_WIDTH, Math.ceil(viewBounds.right / gridStep) * gridStep);
-    const yStart = Math.max(0, Math.floor(viewBounds.top / gridStep) * gridStep);
-    const yEnd = Math.min(ROOM_HEIGHT, Math.ceil(viewBounds.bottom / gridStep) * gridStep);
-    for (let x = xStart; x <= xEnd; x += gridStep) { ctx.moveTo(x, 0); ctx.lineTo(x, ROOM_HEIGHT); }
-    for (let y = yStart; y <= yEnd; y += gridStep) { ctx.moveTo(0, y); ctx.lineTo(ROOM_WIDTH, y); }
-    ctx.stroke();
 
     ctx.strokeStyle = pal.wall; ctx.lineWidth = 10;
     ctx.shadowBlur = 20; ctx.shadowColor = pal.wall; ctx.strokeRect(0,0,ROOM_WIDTH,ROOM_HEIGHT); ctx.shadowBlur = 0;
