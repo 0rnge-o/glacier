@@ -1978,7 +1978,7 @@ function loop(timestamp) {
         }
         return; 
     }
-    if(gameState !== "PLAY" && gameState !== "UPGRADE") return; // PAUSE EVERYTHING EXCEPT UPGRADE
+    if(gameState !== "PLAY") return; // PAUSE EVERYTHING EXCEPT PLAY
     
     update(dt);
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -2143,8 +2143,8 @@ function update(dt) {
     // Always update snow particles (even in menus for visual effect)
     updateSnowParticles(dt);
     
-    // Pause game if not in PLAY state (allow UPGRADE to update)
-    if(gameState !== "PLAY" && gameState !== "UPGRADE") return;
+    // Pause game if not in PLAY state
+    if(gameState !== "PLAY") return;
     
     mouse.wx = mouse.x + camera.x; mouse.wy = mouse.y + camera.y;
 
